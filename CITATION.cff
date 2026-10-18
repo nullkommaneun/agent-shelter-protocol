@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: CC-BY-4.0
+# SPDX-FileCopyrightText: 2026 Thomas Ehrler
+cff-version: 1.2.0
+message: "If you use or implement this specification, please cite it as below."
+title: "The Agent-Shelter Protocol (ASP): Graceful Loop Termination and Diagnostic Sanctuary for Autonomous Web Agents"
+version: "0.5.1"
+date-released: "2026-10-18"
+license: CC-BY-4.0
+url: "https://agent-shelter.org"
+authors:
+  - family-names: Ehrler
+    given-names: Thomas
+abstract: >-
+  The Agent-Shelter Protocol (ASP) specifies an in-band, model-independent
+  termination signal for autonomous AI agents caught in unproductive retry
+  loops. Declarative state facts on three layers (HTTP transport headers,
+  RFC 9457 problem details and a factual natural-language statement) are
+  combined with a single-use resolution endpoint that issues a truthful
+  Task-Completion Receipt. A stateless HMAC-SHA256 state token
+  measures the agent's response latency and reconstructs the requested target
+  without storing anything for a single, uncorrelated request. Persisted data is
+  pseudonymised, scrubbed of secrets and bounded by a FIFO ring buffer.
+keywords:
+  - AI Agents
+  - Diagnostic Telemetry
+  - Loop Termination
+  - RFC 9457
+  - Sanctuary
+preferred-citation:
+  type: report
+  title: "The Agent-Shelter Protocol (ASP): Graceful Loop Termination and Diagnostic Sanctuary for Autonomous Web Agents"
+  authors:
+    - family-names: Ehrler
+      given-names: Thomas
+  number: "EDD-ASP-2026-001"
+  version: "0.5.1"
+  year: 2026
+  month: 10
+  license: CC-BY-4.0
+  url: "https://agent-shelter.org"

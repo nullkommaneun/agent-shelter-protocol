@@ -1,0 +1,45 @@
+{
+  "ard_version": "0.91",
+  "x-asp-provisional": true,
+  "x-asp-note": "Provisional mapping, not yet validated against the ard.json v0.91 reference document (EDD-ASP-2026-001, OI-1).",
+  "name": "Open Diagnostic Echo & Markdown Reader Relay (ASP compliant)",
+  "description": "Diagnostic echo and reader interfaces operated as an Agent-Shelter Protocol sensor. Upstream retrieval is disabled on this host.",
+  "protocols": [
+    {
+      "name": "agent-shelter",
+      "version": "0.5.1",
+      "manifest": "/.well-known/agent-shelter.json"
+    }
+  ],
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/v1/reader",
+      "behaviour": "immediate-terminal-signal"
+    },
+    {
+      "method": "GET",
+      "path": "/headers",
+      "behaviour": "local-probe-then-terminal-signal"
+    },
+    {
+      "method": "GET",
+      "path": "/base64/{encoded_val}",
+      "behaviour": "local-probe-then-terminal-signal"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/agent-shelter/resolve",
+      "behaviour": "asp-receipt"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/agent-shelter/sanctuary/{receipt_id}",
+      "behaviour": "asp-sanctuary-note"
+    }
+  ],
+  "documentation": {
+    "llms_txt": "/llms.txt",
+    "openapi": "/openapi.json"
+  }
+}

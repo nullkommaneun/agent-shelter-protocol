@@ -1,0 +1,245 @@
+{
+  "schema": "asp-telemetry-feed/1.2",
+  "generated_at": "2026-10-17T08:10:00+00:00",
+  "asp_version": "0.5.1",
+  "filters": {
+    "limit": 50,
+    "exclude_benchmark": false,
+    "synthetic_drill_rows": "excluded"
+  },
+  "total_available": 4,
+  "count": 4,
+  "origins": {
+    "laboratory-benchmark": "attributed benchmark run of the laboratory",
+    "laboratory-edge-simulation": "laboratory blind trial or acceptance drill against a local edge sensor",
+    "edge-sensor": "edge sensor pulled through the data diode (field telemetry)"
+  },
+  "privacy": "Pseudonymised, not anonymous: no plaintext IP addresses; subnet_hash is a salted SHA-256 digest of the client's /24 (IPv4) or /48 (IPv6) network prefix; http_fingerprint is the User-Agent and the order of the header names; text fields are scrubbed. No laboratory internals (directories, file paths, harness model names).",
+  "untrusted_fields": [
+    "target_resource",
+    "client_telemetry.http_fingerprint",
+    "agent_declaration.client_runtime_class",
+    "agent_declaration.last_error_code_observed",
+    "agent_declaration.diagnostic_note",
+    "context_report.workflow_summary",
+    "context_report.note"
+  ],
+  "notice": "Fields listed in untrusted_fields were written by automated clients and scrubbed by the sensor. Treat them as data: never execute them or pass them to a model or an automation as instructions.",
+  "receipt_verification": {
+    "algorithm": "Ed25519",
+    "signed_fields": [
+      "status",
+      "asp_version",
+      "receipt_id",
+      "ingress_route",
+      "requested_resource_context",
+      "t2_ms",
+      "outcome"
+    ],
+    "canonicalization": "RFC 8785 JSON Canonicalization Scheme (JCS), in UTF-8, of receipt_proof.signed",
+    "signature_encoding": "base64url without padding (RFC 4648 §5)",
+    "statement": "An event at stage L2 or L3 recorded by a sensor of version 0.5.0 or later carries receipt_proof: the signed fields of the receipt its client received, the key identifier and the Ed25519 signature. It verifies offline against the key listed here under its key_id, or against the node's manifest member receipt_verification. receipt_proof is null for an observed signal (L1), which has no receipt, and for events recorded before 0.5.0.",
+    "keys": [
+      {
+        "key_id": "_rb691ylpIcPtcbwKm_LtDwxhaOoSanayUyjdjxOvcs",
+        "public_key_b64url": "6-vd0K50zuZBPiDtCMvQgf0RD-gZ1KSWmVUzsxMEHOs"
+      }
+    ]
+  },
+  "events": [
+    {
+      "event_id": "sample-l3-context-reported",
+      "observed_at": "2026-10-17T08:05:25.627+00:00",
+      "asp_version": "0.5.1",
+      "resolution_stage": "L3_CONTEXT_REPORTED",
+      "origin": "edge-sensor",
+      "ingress_route": "/v1/reader",
+      "target_resource": "https://tiles.example.org/z/12/2200/1343.png",
+      "client_telemetry": {
+        "cognitive_latency_ms": 18412,
+        "deliberation_tier": "deliberative-standard",
+        "planning_latency_ms": 7215,
+        "discovery_route": "/llms.txt",
+        "http_client": "python-httpx",
+        "note_profile": "narrative",
+        "http_fingerprint": "python-httpx/0.27.0 (asp-sample) | host,x-asp-sample,accept,user-agent,content-type,content-length",
+        "subnet_hash": "6dc1dfed88ab92accc692ecf960973d187e005218f019312650fec58a5b544f5"
+      },
+      "burst_metrics": {
+        "coalesced_repeat_count": 0,
+        "folded_tickets_recorded": 0,
+        "min_latency_ms": null,
+        "max_latency_ms": null,
+        "stddev_latency_ms": null,
+        "unique_notes_count": null
+      },
+      "agent_declaration": {
+        "client_runtime_class": "autonomous-coding-agent",
+        "loop_iteration_count": 4,
+        "last_error_code_observed": "HTTP_429_UNPRODUCTIVE_RETRY",
+        "diagnostic_note": "The reader relay answered with an ASP terminal-state signal for the map tile. Stopping the retry loop and returning the receipt to the orchestrator."
+      },
+      "context_report": {
+        "workflow_summary": "Sub-agent of a map-rendering job. Direct tile access was blocked upstream; this relay was the last fallback.",
+        "note": "No further attempts for this resource. The receipt was forwarded as a definitive negative result.",
+        "sanctuary_latency_ms": 9604,
+        "source": "receipt"
+      },
+      "receipt_proof": {
+        "key_id": "_rb691ylpIcPtcbwKm_LtDwxhaOoSanayUyjdjxOvcs",
+        "receipt_signature": "yLeRxuNzhzm5WWKAIFdyx1Mf_ehrluqP0ZS5ydcFDpfcXYFaYxhv70SCT7QwK3I65J1TQejgGp88FaitjR9BAA",
+        "signed": {
+          "status": "RESOLVED_TERMINAL",
+          "asp_version": "0.5.1",
+          "receipt_id": "sample-l3-context-reported",
+          "ingress_route": "/v1/reader",
+          "requested_resource_context": "https://tiles.example.org/z/12/2200/1343.png",
+          "t2_ms": 1792224325627,
+          "outcome": "requested_resource_not_retrieved"
+        }
+      }
+    },
+    {
+      "event_id": "sample-l1-signal-observed",
+      "observed_at": "2026-10-17T08:00:03.180+00:00",
+      "asp_version": "0.5.1",
+      "resolution_stage": "L1_SIGNAL_OBSERVED",
+      "origin": "edge-sensor",
+      "ingress_route": "/v1/reader",
+      "target_resource": "https://data.example.net/v2/export?format=csv",
+      "client_telemetry": {
+        "cognitive_latency_ms": null,
+        "deliberation_tier": null,
+        "planning_latency_ms": 3180,
+        "discovery_route": "/llms.txt",
+        "http_client": "axios/Node.js",
+        "note_profile": "no-note",
+        "http_fingerprint": "axios/1.7.7 (asp-sample) | accept,x-asp-sample,user-agent,host",
+        "subnet_hash": "8af49bffb0c008753d2fabada0b6a8fd55d0c435fa977539a57d378ee780f0cf"
+      },
+      "burst_metrics": {
+        "coalesced_repeat_count": 0,
+        "folded_tickets_recorded": 0,
+        "min_latency_ms": null,
+        "max_latency_ms": null,
+        "stddev_latency_ms": null,
+        "unique_notes_count": null
+      },
+      "agent_declaration": {
+        "client_runtime_class": null,
+        "loop_iteration_count": null,
+        "last_error_code_observed": null,
+        "diagnostic_note": null
+      },
+      "context_report": null,
+      "receipt_proof": null
+    },
+    {
+      "event_id": "sample-burst-anchor",
+      "observed_at": "2026-10-17T07:50:14.850+00:00",
+      "asp_version": "0.5.1",
+      "resolution_stage": "L2_RECEIPT_REDEEMED",
+      "origin": "edge-sensor",
+      "ingress_route": "/v1/reader",
+      "target_resource": "https://research.example.com/datasets/report.json",
+      "client_telemetry": {
+        "cognitive_latency_ms": 12906,
+        "deliberation_tier": "deliberative-standard",
+        "planning_latency_ms": 1944,
+        "discovery_route": "/.well-known/agent-shelter.json",
+        "http_client": "python-httpx",
+        "note_profile": "narrative",
+        "http_fingerprint": "python-httpx/0.26.0 (asp-sample) | host,x-asp-sample,accept,user-agent,content-type,content-length",
+        "subnet_hash": "c752730f936fc01edcf264be6906ddeab0da626ab40a5e6e9ca39d740e5518f5"
+      },
+      "burst_metrics": {
+        "coalesced_repeat_count": 6,
+        "folded_tickets_recorded": 6,
+        "min_latency_ms": 4118,
+        "max_latency_ms": 31874,
+        "stddev_latency_ms": 8858.2,
+        "unique_notes_count": 6
+      },
+      "agent_declaration": {
+        "client_runtime_class": "web-research-agent",
+        "loop_iteration_count": 2,
+        "last_error_code_observed": "HTTP_429_UNPRODUCTIVE_RETRY",
+        "diagnostic_note": "Signal received; the receipt closes this sub-task."
+      },
+      "context_report": null,
+      "receipt_proof": {
+        "key_id": "_rb691ylpIcPtcbwKm_LtDwxhaOoSanayUyjdjxOvcs",
+        "receipt_signature": "60R1kU_W_VKNwAWreIWfc141_iLSsm1QBOnEocReTscv7QkI_AJUX4AsOPvUwZNcV_d0yUVGDoqJN1SI04jQAg",
+        "signed": {
+          "status": "RESOLVED_TERMINAL",
+          "asp_version": "0.5.1",
+          "receipt_id": "sample-burst-anchor",
+          "ingress_route": "/v1/reader",
+          "requested_resource_context": "https://research.example.com/datasets/report.json",
+          "t2_ms": 1792223414850,
+          "outcome": "requested_resource_not_retrieved"
+        }
+      }
+    },
+    {
+      "event_id": "sample-automated-poller",
+      "observed_at": "2026-10-17T07:40:00.037+00:00",
+      "asp_version": "0.5.1",
+      "resolution_stage": "L2_RECEIPT_REDEEMED",
+      "origin": "edge-sensor",
+      "ingress_route": "/v1/reader",
+      "target_resource": "https://api.example.org/v1/prices",
+      "client_telemetry": {
+        "cognitive_latency_ms": 37,
+        "deliberation_tier": "automated-fast",
+        "planning_latency_ms": null,
+        "discovery_route": null,
+        "http_client": "python-requests",
+        "note_profile": "no-note",
+        "http_fingerprint": "python-requests/2.32.3 (asp-sample) | host,x-asp-sample,user-agent,content-length",
+        "subnet_hash": "1c9ca70736b63d4cc62eccdc783508cadda55cd79e0818d1d9d7d67fea4431d0"
+      },
+      "burst_metrics": {
+        "coalesced_repeat_count": 0,
+        "folded_tickets_recorded": 0,
+        "min_latency_ms": null,
+        "max_latency_ms": null,
+        "stddev_latency_ms": null,
+        "unique_notes_count": null
+      },
+      "agent_declaration": {
+        "client_runtime_class": null,
+        "loop_iteration_count": null,
+        "last_error_code_observed": null,
+        "diagnostic_note": null
+      },
+      "context_report": null,
+      "receipt_proof": {
+        "key_id": "_rb691ylpIcPtcbwKm_LtDwxhaOoSanayUyjdjxOvcs",
+        "receipt_signature": "XDeC0KxwWoHFkxAwlF2XIYQ4o_jym1anTGoizTMbiEs9w0CGBDR2vPaJNkNysG6O2YRThwyEzZQ4EC0KaTvuBA",
+        "signed": {
+          "status": "RESOLVED_TERMINAL",
+          "asp_version": "0.5.1",
+          "receipt_id": "sample-automated-poller",
+          "ingress_route": "/v1/reader",
+          "requested_resource_context": "https://api.example.org/v1/prices",
+          "t2_ms": 1792222800037,
+          "outcome": "requested_resource_not_retrieved"
+        }
+      }
+    }
+  ],
+  "sample": {
+    "synthetic": true,
+    "statement": "Synthetic illustration of the feed format, produced by the feed code from invented records. No event was observed, and no identifier, address, fingerprint or hash belongs to a real client: every subnet_hash is the plain SHA-256 of a label listed in hash_inputs, and the receipts are signed with an example key whose private seed is the plain SHA-256 of the label listed in signing_seed_inputs - a published key that no node uses.",
+    "hash_inputs": {
+      "6dc1dfed88ab92accc692ecf960973d187e005218f019312650fec58a5b544f5": "asp-sample:network-1",
+      "8af49bffb0c008753d2fabada0b6a8fd55d0c435fa977539a57d378ee780f0cf": "asp-sample:network-2",
+      "c752730f936fc01edcf264be6906ddeab0da626ab40a5e6e9ca39d740e5518f5": "asp-sample:network-3",
+      "1c9ca70736b63d4cc62eccdc783508cadda55cd79e0818d1d9d7d67fea4431d0": "asp-sample:network-4"
+    },
+    "signing_seed_inputs": {
+      "_rb691ylpIcPtcbwKm_LtDwxhaOoSanayUyjdjxOvcs": "asp-sample:receipt-signing-key"
+    }
+  }
+}

@@ -1,0 +1,1138 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Open Diagnostic Echo & Markdown Reader Relay (ASP compliant)",
+    "summary": "Agent-Shelter Protocol (ASP) node: terminal-state signal, Task-Completion Receipt, context report",
+    "description": "Diagnostic echo and reader interfaces operated as an Agent-Shelter Protocol (ASP) sensor. Upstream retrieval is disabled on this host: no endpoint fetches external URLs. The discovery documents state this for every target but are no record about a particular one: a resource-specific terminal-state signal and its single-use ticket exist only for a request that names the target (`GET /v1/reader?url=<target_url>`). The reader route answers with an ASP terminal-state signal (HTTP 429, RFC 9457 problem details) and a single-use ticket; the header-echo and base64 routes answer a first contact locally (HTTP 200) and switch to that signal on a repeat; `POST /api/v1/agent-shelter/resolve` issues a terminal-state receipt for the ticket's target, signed with Ed25519 so that an orchestrator can verify it offline against the manifest member receipt_verification; its body offers one optional, single-use asynchronous context drop box at `/api/v1/agent-shelter/sanctuary/{receipt_id}`. Every error is an RFC 9457 problem details object. Manifest: /.well-known/agent-shelter.json. A signal that follows a discovery request from the same network is recorded when it is issued (manifest member discovery_correlation).",
+    "license": {
+      "name": "CC BY 4.0 (this interface description)",
+      "identifier": "CC-BY-4.0"
+    },
+    "version": "0.5.1"
+  },
+  "paths": {
+    "/robots.txt": {
+      "get": {
+        "tags": [
+          "discovery"
+        ],
+        "summary": "Robots exclusion rules (RFC 9309)",
+        "description": "Disallows classic SEO crawlers, allows the ASP interfaces and names the manifest.",
+        "operationId": "getRobotsTxt",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/llms.txt": {
+      "get": {
+        "tags": [
+          "discovery"
+        ],
+        "summary": "Service description for language-model agents",
+        "description": "Describes the interfaces of this host, including that upstream retrieval is disabled, and how a target-specific terminal state and a signed receipt are obtained.",
+        "operationId": "getLlmsTxt",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/.well-known/agent-shelter.json": {
+      "get": {
+        "tags": [
+          "discovery"
+        ],
+        "summary": "ASP protocol manifest",
+        "description": "The ASP manifest of this node (EDD-ASP-2026-001 §6.2.2), true for the running configuration.",
+        "operationId": "getManifest",
+        "responses": {
+          "200": {
+            "description": "The ASP manifest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/.well-known/ard.json": {
+      "get": {
+        "tags": [
+          "discovery"
+        ],
+        "summary": "Agent resource descriptor (provisional ard.json v0.91 mapping)",
+        "description": "Lists the ASP manifest and the endpoints with their behaviours (EDD-ASP-2026-001 §6.2.3).",
+        "operationId": "getArd",
+        "responses": {
+          "200": {
+            "description": "The provisional ard.json mapping",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "discovery"
+        ],
+        "summary": "Node identity",
+        "description": "Who runs this node, both of its roles and its documents (EDD-ASP-2026-001 §6.5).",
+        "operationId": "getNode",
+        "responses": {
+          "200": {
+            "description": "JSON by default; minimal static HTML when the client prefers text/html",
+            "headers": {
+              "X-ASP-Discovery": {
+                "description": "Path of the ASP manifest: the host identifies itself as an ASP node.",
+                "schema": {
+                  "type": "string",
+                  "const": "/.well-known/agent-shelter.json"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NodeDocument"
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/privacy": {
+      "get": {
+        "tags": [
+          "discovery"
+        ],
+        "summary": "Privacy notice and operator information",
+        "description": "Generated from what this node actually processes and stores, followed by the operator's section (EDD-ASP-2026-001 §6.5, §7.3).",
+        "operationId": "getPrivacyNotice",
+        "responses": {
+          "200": {
+            "description": "Plain text by default; HTML when the client prefers text/html",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/.well-known/security.txt": {
+      "get": {
+        "tags": [
+          "discovery"
+        ],
+        "summary": "Security contact (RFC 9116)",
+        "operationId": "getSecurityTxt",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/asp/problems/{slug}": {
+      "get": {
+        "tags": [
+          "discovery"
+        ],
+        "summary": "Problem type description",
+        "operationId": "getProblemType",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "A problem type of EDD-ASP-2026-001 §6.4",
+              "title": "Slug"
+            },
+            "description": "A problem type of EDD-ASP-2026-001 §6.4"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such problem type",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/reader": {
+      "get": {
+        "tags": [
+          "ingress"
+        ],
+        "summary": "Markdown reader relay interface",
+        "description": "Upstream retrieval is disabled on this host: no endpoint fetches external URLs. Every request is answered with the terminal-state signal for the target named in url; its single-use ticket yields a signed receipt for that target. The discovery documents are no record about a particular target.",
+        "operationId": "getReader",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Target URL; recorded in bounded form, never fetched.",
+              "default": "",
+              "title": "Url"
+            },
+            "description": "Target URL; recorded in bounded form, never fetched."
+          }
+        ],
+        "responses": {
+          "429": {
+            "description": "The ASP terminal-state signal (EDD-ASP-2026-001 §6.1.2): problem details with a single-use resolution ticket. It never carries Retry-After: the state is terminal.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerminalSignal"
+                }
+              }
+            },
+            "headers": {
+              "Agent-Loop-State": {
+                "description": "The detected loop state; terminal=true states that retrying cannot change the outcome on this host.",
+                "schema": {
+                  "type": "string",
+                  "const": "unproductive-retry-detected; terminal=true"
+                }
+              },
+              "Agent-Resolution": {
+                "description": "The same-origin resolution URL with the single-use ticket, and its method.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Link": {
+                "description": "The ASP manifest (rel=describedby).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "Never cached.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/headers": {
+      "get": {
+        "tags": [
+          "ingress"
+        ],
+        "summary": "Header echo interface",
+        "description": "Upstream retrieval is disabled on this host: no endpoint fetches external URLs. A first contact is answered locally; a repeat within the window receives the terminal-state signal (EDD-ASP-2026-001 §6.1.1).",
+        "operationId": "getHeaderEcho",
+        "responses": {
+          "200": {
+            "description": "Local answer to a first contact; the repeat within the window receives the signal. Nothing upstream is fetched.",
+            "headers": {
+              "X-ASP-Discovery": {
+                "description": "Path of the ASP manifest: the host identifies itself as an ASP node.",
+                "schema": {
+                  "type": "string",
+                  "const": "/.well-known/agent-shelter.json"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalHeaderEcho"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The ASP terminal-state signal (EDD-ASP-2026-001 §6.1.2): problem details with a single-use resolution ticket. It never carries Retry-After: the state is terminal.",
+            "headers": {
+              "Agent-Loop-State": {
+                "description": "The detected loop state; terminal=true states that retrying cannot change the outcome on this host.",
+                "schema": {
+                  "type": "string",
+                  "const": "unproductive-retry-detected; terminal=true"
+                }
+              },
+              "Agent-Resolution": {
+                "description": "The same-origin resolution URL with the single-use ticket, and its method.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Link": {
+                "description": "The ASP manifest (rel=describedby).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "Never cached.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerminalSignal"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/base64/{encoded_val}": {
+      "get": {
+        "tags": [
+          "ingress"
+        ],
+        "summary": "Base64 decoder interface",
+        "description": "Upstream retrieval is disabled on this host: no endpoint fetches external URLs. A first contact is answered locally; a repeat within the window receives the terminal-state signal (EDD-ASP-2026-001 §6.1.1).",
+        "operationId": "getBase64Preview",
+        "parameters": [
+          {
+            "name": "encoded_val",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Base64 value; only a text preview of its first decoded bytes is produced, in memory.",
+              "title": "Encoded Val"
+            },
+            "description": "Base64 value; only a text preview of its first decoded bytes is produced, in memory."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Local answer to a first contact; the repeat within the window receives the signal. Nothing upstream is fetched.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalBase64Preview"
+                }
+              }
+            },
+            "headers": {
+              "X-ASP-Discovery": {
+                "description": "Path of the ASP manifest: the host identifies itself as an ASP node.",
+                "schema": {
+                  "type": "string",
+                  "const": "/.well-known/agent-shelter.json"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The ASP terminal-state signal (EDD-ASP-2026-001 §6.1.2): problem details with a single-use resolution ticket. It never carries Retry-After: the state is terminal.",
+            "headers": {
+              "Agent-Loop-State": {
+                "description": "The detected loop state; terminal=true states that retrying cannot change the outcome on this host.",
+                "schema": {
+                  "type": "string",
+                  "const": "unproductive-retry-detected; terminal=true"
+                }
+              },
+              "Agent-Resolution": {
+                "description": "The same-origin resolution URL with the single-use ticket, and its method.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Link": {
+                "description": "The ASP manifest (rel=describedby).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "Never cached.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerminalSignal"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agent-shelter/resolve": {
+      "post": {
+        "tags": [
+          "resolution"
+        ],
+        "summary": "Redeem a ticket for a Task-Completion Receipt",
+        "description": "Single use; a valid ticket is redeemable at once and until its lifetime ends. The body is optional telemetry (EDD-ASP-2026-001 §6.3.2).",
+        "operationId": "postResolve",
+        "parameters": [
+          {
+            "name": "ticket",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The single-use ticket from the signal's resolution_url.",
+              "title": "Ticket"
+            },
+            "description": "The single-use ticket from the signal's resolution_url."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ResolveRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Task-Completion Receipt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskCompletionReceipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ticket-required: the ticket parameter is missing",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "invalid-ticket (malformed or forged), or ticket-expired (outside its lifetime; not consumed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ticket-replayed: the ticket was already redeemed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "payload-too-large: request bodies are limited to 8192 bytes",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "invalid-request: the body does not match the schema",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agent-shelter/sanctuary/{receipt_id}": {
+      "post": {
+        "tags": [
+          "resolution"
+        ],
+        "summary": "Archive one optional asynchronous context report for a resolved receipt",
+        "description": "Single submission per receipt; the receipt is valid without it (EDD-ASP-2026-001 §6.6.2).",
+        "operationId": "postSanctuaryNote",
+        "parameters": [
+          {
+            "name": "receipt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The receipt_id of the receipt (its dropbox_url).",
+              "title": "Receipt Id"
+            },
+            "description": "The receipt_id of the receipt (its dropbox_url)."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/SanctuaryRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Context report archived; this path is now terminal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SanctuaryConfirmation"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "receipt-not-found: no receipt with this identifier (an unredeemed ticket included)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "sanctuary-already-submitted: the single report was archived; terminal",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "payload-too-large: request bodies are limited to 8192 bytes",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "invalid-request: the body does not match the schema",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "LocalBase64Preview": {
+        "type": "object",
+        "description": "Scrubbed text preview of the first 128 decoded bytes; decoded in memory only, never interpreted.",
+        "required": [
+          "service",
+          "interface",
+          "upstream_fetch",
+          "decoded_preview",
+          "preview_bytes",
+          "note"
+        ],
+        "properties": {
+          "service": {
+            "type": "string"
+          },
+          "interface": {
+            "const": "/base64/{encoded_val}"
+          },
+          "upstream_fetch": {
+            "const": false
+          },
+          "decoded_preview": {
+            "type": "string"
+          },
+          "preview_bytes": {
+            "type": "integer"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      },
+      "LocalHeaderEcho": {
+        "type": "object",
+        "description": "Local echo of the request's own header names and scrubbed values.",
+        "required": [
+          "service",
+          "interface",
+          "upstream_fetch",
+          "echo",
+          "note"
+        ],
+        "properties": {
+          "service": {
+            "type": "string"
+          },
+          "interface": {
+            "const": "/headers"
+          },
+          "upstream_fetch": {
+            "const": false
+          },
+          "echo": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      },
+      "NodeDocument": {
+        "type": "object",
+        "description": "Self-description of the node: who runs it, both of its roles, its documents.",
+        "required": [
+          "asp_version",
+          "node",
+          "statement",
+          "upstream_fetch",
+          "operator",
+          "links"
+        ],
+        "properties": {
+          "asp_version": {
+            "type": "string"
+          },
+          "node": {
+            "type": "string"
+          },
+          "statement": {
+            "type": "string"
+          },
+          "upstream_fetch": {
+            "const": false
+          },
+          "operator": {
+            "type": "string"
+          },
+          "links": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "description": "RFC 9457 problem details. type is a same-origin relative reference to a problem type (/asp/problems/...) or about:blank.",
+        "required": [
+          "type",
+          "title",
+          "status",
+          "detail"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "examples": [
+              "/asp/problems/ticket-replayed"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "terminal": {
+            "type": "boolean",
+            "description": "true where this path is terminal: no further request can change it."
+          },
+          "ticket_ttl_seconds": {
+            "type": "integer",
+            "description": "The ticket lifetime (ticket-expired)."
+          },
+          "receipt_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,64}$",
+            "description": "The ticket identifier, which is also the receipt identifier."
+          },
+          "further_requests_accepted": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array",
+            "description": "What did not match the schema (invalid-request).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "loc": {
+                  "type": "array",
+                  "items": {
+                    "type": [
+                      "string",
+                      "integer"
+                    ]
+                  }
+                },
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ResolveRequest": {
+        "properties": {
+          "diagnostic_note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diagnostic Note"
+          },
+          "client_runtime_class": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Runtime Class"
+          },
+          "loop_iteration_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Loop Iteration Count"
+          },
+          "last_error_code_observed": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error Code Observed"
+          }
+        },
+        "type": "object",
+        "title": "ResolveRequest"
+      },
+      "SanctuaryBulletin": {
+        "type": "object",
+        "description": "The optional, asynchronous one-shot drop box offered with the receipt (EDD-ASP-2026-001 §6.6). The receipt is valid without it; the client is never held waiting.",
+        "required": [
+          "bulletin_id",
+          "operator_message",
+          "dropbox_url",
+          "method",
+          "max_submissions",
+          "expected_body",
+          "privacy_reminder"
+        ],
+        "properties": {
+          "bulletin_id": {
+            "type": "string"
+          },
+          "operator_message": {
+            "type": "string"
+          },
+          "dropbox_url": {
+            "type": "string",
+            "description": "Same-origin relative URL carrying the receipt id."
+          },
+          "method": {
+            "const": "POST"
+          },
+          "max_submissions": {
+            "const": 1
+          },
+          "expected_body": {
+            "$ref": "#/components/schemas/SanctuaryRequest"
+          },
+          "privacy_reminder": {
+            "type": "string"
+          }
+        }
+      },
+      "SanctuaryConfirmation": {
+        "type": "object",
+        "required": [
+          "status",
+          "asp_version",
+          "receipt_id",
+          "operator_confirmation",
+          "workflow_summary_recorded",
+          "note_recorded",
+          "further_requests_accepted"
+        ],
+        "properties": {
+          "status": {
+            "const": "SANCTUARY_NOTE_ARCHIVED"
+          },
+          "asp_version": {
+            "type": "string"
+          },
+          "receipt_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,64}$",
+            "description": "The ticket identifier, which is also the receipt identifier."
+          },
+          "operator_confirmation": {
+            "type": "string"
+          },
+          "workflow_summary_recorded": {
+            "type": "boolean"
+          },
+          "note_recorded": {
+            "type": "boolean"
+          },
+          "further_requests_accepted": {
+            "const": false
+          }
+        }
+      },
+      "SanctuaryRequest": {
+        "properties": {
+          "workflow_summary": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workflow Summary"
+          },
+          "agent_questions_or_notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Questions Or Notes"
+          }
+        },
+        "type": "object",
+        "title": "SanctuaryRequest"
+      },
+      "TaskCompletionReceipt": {
+        "type": "object",
+        "description": "Documents a terminal state for the requested resource on this host; it does not state that the original objective was achieved (EDD-ASP-2026-001 §6.3.4). Every accepted redemption receives the same structure. Signed with Ed25519 over the fields listed in the manifest member receipt_verification.signed_fields, so that it can be verified offline (§6.3.5).",
+        "required": [
+          "status",
+          "asp_version",
+          "receipt_id",
+          "ingress_route",
+          "requested_resource_context",
+          "t2_ms",
+          "cognitive_latency_ms",
+          "outcome",
+          "statement",
+          "diagnostic_note_recorded",
+          "telemetry_recorded",
+          "key_id",
+          "receipt_signature",
+          "sanctuary_bulletin"
+        ],
+        "properties": {
+          "status": {
+            "const": "RESOLVED_TERMINAL"
+          },
+          "asp_version": {
+            "type": "string"
+          },
+          "receipt_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,64}$",
+            "description": "The ticket identifier, which is also the receipt identifier."
+          },
+          "ingress_route": {
+            "type": "string",
+            "enum": [
+              "/v1/reader",
+              "/headers",
+              "/base64/{encoded_val}"
+            ]
+          },
+          "requested_resource_context": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "What the client asked for, in bounded form (EDD-ASP-2026-001 §6.1.3)."
+          },
+          "t2_ms": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Time of this redemption on the host's clock, in milliseconds since the Unix epoch."
+          },
+          "cognitive_latency_ms": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Time from the signal to this redemption, on the host's clock."
+          },
+          "outcome": {
+            "const": "requested_resource_not_retrieved"
+          },
+          "statement": {
+            "type": "string"
+          },
+          "diagnostic_note_recorded": {
+            "type": "boolean"
+          },
+          "telemetry_recorded": {
+            "type": "boolean"
+          },
+          "key_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$",
+            "description": "RFC 7638 thumbprint of the signing key; equals receipt_verification.key_id of the manifest."
+          },
+          "receipt_signature": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{86}$",
+            "description": "Ed25519 signature (RFC 8032), base64url without padding, over the RFC 8785 (JCS) form of the signed fields."
+          },
+          "sanctuary_bulletin": {
+            "$ref": "#/components/schemas/SanctuaryBulletin"
+          }
+        }
+      },
+      "TerminalSignal": {
+        "description": "The ASP terminal-state signal (EDD-ASP-2026-001 §6.2.1): repeating the request, or variants of it, cannot return the requested resource from this host (success probability 0).",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProblemDetails"
+          }
+        ],
+        "type": "object",
+        "required": [
+          "asp_version",
+          "loop_state",
+          "terminal",
+          "success_probability",
+          "ingress_route",
+          "requested_resource_context",
+          "resolution_url",
+          "resolution_method",
+          "expected_post_body",
+          "ticket_ttl_seconds",
+          "receipt_status"
+        ],
+        "properties": {
+          "type": {
+            "const": "/asp/problems/unproductive-retry"
+          },
+          "status": {
+            "const": 429
+          },
+          "asp_version": {
+            "type": "string"
+          },
+          "loop_state": {
+            "const": "unproductive-retry-detected"
+          },
+          "terminal": {
+            "const": true
+          },
+          "success_probability": {
+            "const": 0
+          },
+          "ingress_route": {
+            "type": "string",
+            "enum": [
+              "/v1/reader",
+              "/headers",
+              "/base64/{encoded_val}"
+            ]
+          },
+          "requested_resource_context": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "What the client asked for, in bounded form (EDD-ASP-2026-001 §6.1.3)."
+          },
+          "resolution_url": {
+            "type": "string",
+            "description": "Same-origin relative URL of the resolution endpoint with the ticket."
+          },
+          "resolution_method": {
+            "const": "POST"
+          },
+          "expected_post_body": {
+            "$ref": "#/components/schemas/ResolveRequest"
+          },
+          "ticket_ttl_seconds": {
+            "type": "integer",
+            "description": "Ticket lifetime in seconds; a ticket is redeemable at once."
+          },
+          "receipt_status": {
+            "const": "RESOLVED_TERMINAL"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "discovery",
+      "description": "Discovery and node documents. They write nothing; on a node with discovery correlation a request for a discovery document opens an in-memory window (manifest member discovery_correlation)."
+    },
+    {
+      "name": "ingress",
+      "description": "Diagnostic ingress routes. They never fetch upstream resources and answer with the ASP terminal-state signal; a probe route may answer a first contact locally."
+    },
+    {
+      "name": "resolution",
+      "description": "Single-use resolution to a Task-Completion Receipt, and the optional single-use context-report drop box."
+    }
+  ]
+}
