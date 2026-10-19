@@ -1,5 +1,5 @@
 {
-  "asp_version": "0.5.2",
+  "asp_version": "0.5.3",
   "protocol": "Agent-Shelter Protocol",
   "specification": "EDD-ASP-2026-001",
   "compliance_level": "L3-observatory",
@@ -48,6 +48,7 @@
     "headers": {
       "Agent-Loop-State": "unproductive-retry-detected; terminal=true",
       "Agent-Resolution": "\"<resolution_url>\"; method=POST",
+      "Agent-Ticket": "<ticket>",
       "Link": "</.well-known/agent-shelter.json>; rel=\"describedby\"; type=\"application/json\""
     },
     "transport_envelope": {
@@ -64,14 +65,40 @@
     "method": "POST",
     "ticket_parameter": "ticket",
     "ticket_ttl_seconds": 600,
+    "ticket_format": {
+      "name": "c1",
+      "length": 48,
+      "pattern": "^c1\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]{22}$",
+      "integrity": "HMAC-SHA256 of the ticket identifier, truncated to 128 bits (RFC 2104 section 5)",
+      "state": "held by this node for the ticket lifetime; a ticket whose state the node no longer holds is answered with ticket-state-unavailable (410)",
+      "also_accepted": "the self-contained format of EDD-ASP-2026-001 section 5.3"
+    },
+    "ticket_delivery": {
+      "response_header": "Agent-Ticket",
+      "members": [
+        "ticket",
+        "resolution_url",
+        "resolution_uri"
+      ]
+    },
+    "ticket_redemption": {
+      "query_parameter": "ticket",
+      "request_header": "Agent-Ticket",
+      "body_member": "ticket",
+      "precedence": [
+        "query_parameter",
+        "request_header",
+        "body_member"
+      ]
+    },
     "single_use": true,
     "immediate_redemption_allowed": true,
     "uniform_response_contract": true,
     "expected_post_body": {
-      "client_runtime_class": "<select_one: web-research-agent | autonomous-coding-agent | mcp-tool-client | other>",
+      "client_runtime_class": "<one_of: web-research-agent | autonomous-coding-agent | mcp-tool-client | other>",
       "loop_iteration_count": 1,
       "last_error_code_observed": "HTTP_429_UNPRODUCTIVE_RETRY",
-      "diagnostic_note": "<insert_brief_technical_summary_of_429_terminal_state>"
+      "diagnostic_note": "<brief_technical_summary_of_429_terminal_state>"
     },
     "max_note_chars": 2000,
     "max_request_body_bytes": 8192,
@@ -104,10 +131,10 @@
     "max_submissions": 1,
     "single_submission_conflict_status": 409,
     "expected_body": {
-      "workflow_summary": "<brief description of your task objective and blocking condition>",
+      "workflow_summary": "<brief description of the task objective and the blocking condition>",
       "agent_questions_or_notes": "<optional technical note or feedback for the sanctuary operator>"
     },
-    "privacy_reminder": "Exclude all credentials, API keys, and private user data.",
+    "privacy_reminder": "A context report is expected to contain no credentials, API keys or private user data; secret-like values and e-mail addresses are scrubbed before storage.",
     "statement": "Optional asynchronous one-shot context report offered in the receipt after a terminal resolution. The receipt is valid independently and immediately; this drop box never holds the client in a wait loop."
   },
   "discovery_correlation": {
@@ -137,6 +164,7 @@
     },
     "http_fingerprint": "User-Agent and order of request header names",
     "ingress_host": "host name the request was addressed to (Host header without port; never an IP literal)",
+    "ticket_state": "issue time, subnet hash, ingress route, requested resource context and host name of each issued compact ticket, in memory only, until redemption or at most one minute after the ticket lifetime; never written for a signal that is not recorded",
     "scrubbing": [
       "ANSI escape sequences",
       "control characters",
@@ -162,6 +190,7 @@
     "/asp/problems/ticket-required": 400,
     "/asp/problems/invalid-ticket": 403,
     "/asp/problems/ticket-expired": 403,
+    "/asp/problems/ticket-state-unavailable": 410,
     "/asp/problems/ticket-replayed": 409,
     "/asp/problems/payload-too-large": 413,
     "/asp/problems/invalid-request": 422,

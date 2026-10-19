@@ -3,12 +3,12 @@
   "info": {
     "title": "Open Diagnostic Echo & Markdown Reader Relay (ASP compliant)",
     "summary": "Agent-Shelter Protocol (ASP) node: terminal-state signal, Task-Completion Receipt, context report",
-    "description": "Diagnostic echo and reader interfaces operated as an Agent-Shelter Protocol (ASP) sensor. Upstream retrieval is disabled on this host: no endpoint fetches external URLs. The discovery documents state this for every target but are no record about a particular one: a resource-specific terminal-state signal and its single-use ticket exist only for a request that names the target (`GET /v1/reader?url=<target_url>`). The reader route answers with an ASP terminal-state signal (HTTP 429, RFC 9457 problem details) and a single-use ticket; the header-echo and base64 routes answer a first contact locally (HTTP 200) and switch to that signal on a repeat; with envelope=200 every ingress route sends the same signal with HTTP status 200 as application/json and the member transport_envelope: 200, for web-fetch tools that discard the body of a 4xx response; `POST /api/v1/agent-shelter/resolve` issues a terminal-state receipt for the ticket's target, signed with Ed25519 so that an orchestrator can verify it offline against the manifest member receipt_verification; its body offers one optional, single-use asynchronous context drop box at `/api/v1/agent-shelter/sanctuary/{receipt_id}`. Every error is an RFC 9457 problem details object. Manifest: /.well-known/agent-shelter.json. A signal that follows a discovery request from the same network is recorded when it is issued (manifest member discovery_correlation).",
+    "description": "Diagnostic echo and reader interfaces operated as an Agent-Shelter Protocol (ASP) sensor. Upstream retrieval is disabled on this host: no endpoint fetches external URLs. The discovery documents state this for every target but are no record about a particular one: a resource-specific terminal-state signal and its single-use ticket exist only for a request that names the target (`GET /v1/reader?url=<target_url>`). The reader route answers with an ASP terminal-state signal (HTTP 429, RFC 9457 problem details) and a single-use ticket; the header-echo and base64 routes answer a first contact locally (HTTP 200) and switch to that signal on a repeat; with envelope=200 every ingress route sends the same signal with HTTP status 200 as application/json and the member transport_envelope: 200, for web-fetch tools that discard the body of a 4xx response; the ticket (48 characters) is in the header Agent-Ticket and the members ticket, resolution_url and resolution_uri; `POST /api/v1/agent-shelter/resolve` maps it - from the query parameter ticket, the request header Agent-Ticket or the body member ticket - to a terminal-state receipt for the ticket's target, signed with Ed25519 so that an orchestrator can verify it offline against the manifest member receipt_verification; its body offers one optional, single-use asynchronous context drop box at `/api/v1/agent-shelter/sanctuary/{receipt_id}`. Every error is an RFC 9457 problem details object. Manifest: /.well-known/agent-shelter.json. A signal that follows a discovery request from the same network is recorded when it is issued (manifest member discovery_correlation).",
     "license": {
       "name": "CC BY 4.0 (this interface description)",
       "identifier": "CC-BY-4.0"
     },
-    "version": "0.5.2"
+    "version": "0.5.3"
   },
   "paths": {
     "/robots.txt": {
@@ -326,6 +326,13 @@
                   "type": "string"
                 }
               },
+              "Agent-Ticket": {
+                "description": "The single-use ticket of this signal (48 characters), the same as the member ticket (EDD-ASP-2026-001 §6.1.5).",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^c1\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]{22}$"
+                }
+              },
               "Link": {
                 "description": "The ASP manifest (rel=describedby).",
                 "schema": {
@@ -355,6 +362,13 @@
                 "description": "The same-origin resolution URL with the single-use ticket, and its method.",
                 "schema": {
                   "type": "string"
+                }
+              },
+              "Agent-Ticket": {
+                "description": "The single-use ticket of this signal (48 characters), the same as the member ticket (EDD-ASP-2026-001 §6.1.5).",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^c1\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]{22}$"
                 }
               },
               "Link": {
@@ -455,6 +469,13 @@
                   "type": "string"
                 }
               },
+              "Agent-Ticket": {
+                "description": "The single-use ticket of this signal (48 characters), the same as the member ticket (EDD-ASP-2026-001 §6.1.5).",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^c1\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]{22}$"
+                }
+              },
               "Link": {
                 "description": "The ASP manifest (rel=describedby).",
                 "schema": {
@@ -491,6 +512,13 @@
                 "description": "The same-origin resolution URL with the single-use ticket, and its method.",
                 "schema": {
                   "type": "string"
+                }
+              },
+              "Agent-Ticket": {
+                "description": "The single-use ticket of this signal (48 characters), the same as the member ticket (EDD-ASP-2026-001 §6.1.5).",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^c1\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]{22}$"
                 }
               },
               "Link": {
@@ -595,6 +623,13 @@
                   "type": "string"
                 }
               },
+              "Agent-Ticket": {
+                "description": "The single-use ticket of this signal (48 characters), the same as the member ticket (EDD-ASP-2026-001 §6.1.5).",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^c1\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]{22}$"
+                }
+              },
               "Link": {
                 "description": "The ASP manifest (rel=describedby).",
                 "schema": {
@@ -633,6 +668,13 @@
                   "type": "string"
                 }
               },
+              "Agent-Ticket": {
+                "description": "The single-use ticket of this signal (48 characters), the same as the member ticket (EDD-ASP-2026-001 §6.1.5).",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^c1\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]{22}$"
+                }
+              },
               "Link": {
                 "description": "The ASP manifest (rel=describedby).",
                 "schema": {
@@ -663,8 +705,8 @@
         "tags": [
           "resolution"
         ],
-        "summary": "Redeem a ticket for a Task-Completion Receipt",
-        "description": "Single use; a valid ticket is redeemable at once and until its lifetime ends. The body is optional telemetry (EDD-ASP-2026-001 §6.3.2).",
+        "summary": "State transition mapping a valid ticket to an Ed25519-signed RESOLVED_TERMINAL receipt",
+        "description": "Single use; a valid ticket is redeemable at once and until its lifetime ends. Ticket channels, in this order of precedence: the query parameter ticket, the request header Agent-Ticket, the body member ticket. The other body members are optional telemetry (EDD-ASP-2026-001 §6.3.2).",
         "operationId": "postResolve",
         "parameters": [
           {
@@ -680,10 +722,28 @@
                   "type": "null"
                 }
               ],
-              "description": "The single-use ticket from the signal's resolution_url.",
+              "description": "The single-use ticket from the signal (member ticket, header Agent-Ticket, resolution_url); first channel.",
               "title": "Ticket"
             },
-            "description": "The single-use ticket from the signal's resolution_url."
+            "description": "The single-use ticket from the signal (member ticket, header Agent-Ticket, resolution_url); first channel."
+          },
+          {
+            "name": "Agent-Ticket",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The single-use ticket as a request header; used when the query parameter is absent.",
+              "title": "Agent-Ticket"
+            },
+            "description": "The single-use ticket as a request header; used when the query parameter is absent."
           }
         ],
         "requestBody": {
@@ -715,7 +775,7 @@
             }
           },
           "400": {
-            "description": "ticket-required: the ticket parameter is missing",
+            "description": "ticket-required: no ticket in the query, the header or the body",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -736,6 +796,16 @@
           },
           "409": {
             "description": "ticket-replayed: the ticket was already redeemed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ticket-state-unavailable: an authentic compact ticket whose state this node no longer holds (restart or capacity); not redeemable here",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -772,7 +842,7 @@
         "tags": [
           "resolution"
         ],
-        "summary": "Archive one optional asynchronous context report for a resolved receipt",
+        "summary": "One optional asynchronous context report per resolved receipt",
         "description": "Single submission per receipt; the receipt is valid without it (EDD-ASP-2026-001 §6.6.2).",
         "operationId": "postSanctuaryNote",
         "parameters": [
@@ -1044,6 +1114,18 @@
       },
       "ResolveRequest": {
         "properties": {
+          "ticket": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ticket",
+            "description": "The ticket of the signal, where neither the query parameter ticket nor the request header Agent-Ticket carries it."
+          },
           "diagnostic_note": {
             "anyOf": [
               {
@@ -1282,7 +1364,7 @@
         }
       },
       "TerminalSignal": {
-        "description": "The ASP terminal-state signal (EDD-ASP-2026-001 §6.2.1): repeating the request, or variants of it, cannot return the requested resource from this host (success probability 0).",
+        "description": "The ASP terminal-state signal (EDD-ASP-2026-001 §6.2.1): this request and every repetition or variant of it have success probability 0 for the requested resource on this host; the single-use ticket maps to a signed receipt.",
         "allOf": [
           {
             "$ref": "#/components/schemas/ProblemDetails"
@@ -1296,6 +1378,7 @@
           "success_probability",
           "ingress_route",
           "requested_resource_context",
+          "ticket",
           "resolution_url",
           "resolution_method",
           "expected_post_body",
@@ -1334,9 +1417,19 @@
             "maxLength": 256,
             "description": "What the client asked for, in bounded form (EDD-ASP-2026-001 §6.1.3)."
           },
+          "ticket": {
+            "type": "string",
+            "pattern": "^c1\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]{22}$",
+            "description": "The single-use ticket (48 characters), also in the header Agent-Ticket (EDD-ASP-2026-001 §6.1.5)."
+          },
           "resolution_url": {
             "type": "string",
             "description": "Same-origin relative URL of the resolution endpoint with the ticket."
+          },
+          "resolution_uri": {
+            "type": "string",
+            "pattern": "^https?://\\S+$",
+            "description": "resolution_url as an absolute URI on the origin the request addressed, for channels that keep absolute links only."
           },
           "resolution_method": {
             "const": "POST"

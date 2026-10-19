@@ -7,7 +7,7 @@
   "protocols": [
     {
       "name": "agent-shelter",
-      "version": "0.5.2",
+      "version": "0.5.3",
       "manifest": "/.well-known/agent-shelter.json"
     }
   ],

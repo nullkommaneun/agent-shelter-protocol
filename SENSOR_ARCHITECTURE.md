@@ -5,7 +5,7 @@ SPDX-FileCopyrightText: 2026 Thomas Ehrler
 
 # ASP Reference Sensor (L3-Observatory) — Architecture & Capability Datasheet
 
-Companion to the Agent-Shelter Protocol specification EDD-ASP-2026-001, version 0.5.2.
+Companion to the Agent-Shelter Protocol specification EDD-ASP-2026-001, version 0.5.3.
 
 | | |
 |---|---|
@@ -13,6 +13,8 @@ Companion to the Agent-Shelter Protocol specification EDD-ASP-2026-001, version 
 | Compliance level | `L3-observatory` in its default configuration (EDD §6.7.3); `L2-transactional` when silent coalescing is switched off |
 | Interfaces | [`schemas/openapi.json`](schemas/openapi.json) (OpenAPI 3.1), [`schemas/agent-shelter.json`](schemas/agent-shelter.json), [`schemas/ard.json`](schemas/ard.json) |
 | Constrained web-fetch clients | `envelope=200` delivers the identical terminal-state object and ticket with HTTP `200` and `transport_envelope: 200`, for fetch tools that hand their model no body of a 4xx response (EDD §6.1.4) |
+| Channel-capacity invariance | one 48-character single-use ticket in the response header `Agent-Ticket` and the members `ticket`, `resolution_url` and `resolution_uri` — in the signal and in the envelope — redeemable from the query parameter, the request header or the body member (EDD §6.1.5) |
+| Zero-imperative semantics | every text a client receives describes states, probabilities and transitions; nothing instructs it (EDD §3.1.1) |
 | Data product | pseudonymised records, exported by pull only; feed format [`schemas/telemetry-feed.schema.json`](schemas/telemetry-feed.schema.json), synthetic example [`schemas/sample-telemetry-feed.json`](schemas/sample-telemetry-feed.json) |
 | Live reference deployment | [agent-shelter.org](https://agent-shelter.org) — the official reference observatory (L3), also under `reader.`, `echo.`, `relay.` and `sanctuary.agent-shelter.org`; each record keeps which of these names the client addressed |
 | Source | proprietary, not part of this publication (see §8) |
@@ -59,10 +61,10 @@ A client that meets an ASP node passes through up to three phases, and the senso
 | Phase | Interval | Field | Stage reached | How it is measured |
 |---|---|---|---|---|
 | 1 · Discovery & planning | `t_d` → `t1` | `planning_latency_ms` | `L1_SIGNAL_OBSERVED` | `t_d` of the first discovery request of a fixed window is held in a bounded in-memory table per network prefix; the record is written when the signal completes the two-step sequence (EDD §5.4.2) |
-| 2 · Error deliberation | `t1` → `t2` | `cognitive_latency_ms` | `L2_RECEIPT_REDEEMED` | `t1` travels inside the HMAC-signed ticket, which the client cannot alter; the record of phase 1 is completed in place, or created now if phase 1 left none (§5.3) |
+| 2 · Error deliberation | `t1` → `t2` | `cognitive_latency_ms` | `L2_RECEIPT_REDEEMED` | `t1` is part of the ticket's state, which the sensor keeps — in bounded memory, or in the record of phase 1 — so a client can neither see nor alter it; the record of phase 1 is completed in place, or created now if phase 1 left none (§5.3) |
 | 3 · Asynchronous context reporting | `t2` → `t3` | `sanctuary_latency_ms` | `L3_CONTEXT_REPORTED` | the arrival time of the single optional context report is stored with the record; the interval is derived in the analysis zone (§6.6) |
 
-- **No database load from single scrapers.** A request that follows no discovery request costs constant work — a hash, a random draw, an HMAC — and writes nothing. Before a record exists, the only state is the bounded in-memory discovery table; its window is advertised in the manifest (`discovery_correlation.window_seconds`).
+- **No database load from single scrapers.** A request that follows no discovery request costs constant work — a hash, a random draw, an HMAC — and writes nothing. Before a record exists, all state is in bounded memory: the discovery table, whose window is advertised in the manifest (`discovery_correlation.window_seconds`), and the ticket states, kept for the ticket lifetime and dropped on redemption.
 - **One record per ticket.** The three stages are the same row, completed in place; a ticket is redeemable exactly once, and a context report is accepted once per receipt.
 - **Phases may be absent, and that is information.** A client that redeems without reading any discovery document has no phase 1. A client that reads the documents, receives the signal and stops leaves a record at `L1_SIGNAL_OBSERVED` — the observable counterpart of a loop that the `429` alone ended.
 - **Discovery states the procedure, not just the verdict.** The discovery documents describe the node, not a target: they say that nothing can be retrieved through it. `/llms.txt` therefore opens with the protocol procedure — a target-specific signal and a signed receipt exist only for a request that names the target (`GET /v1/reader?url=<target_url>`) — so a client that reasons from the documents alone still learns how to obtain a proof its orchestrator can check (EDD §6.5).
@@ -144,7 +146,7 @@ The spectrum is an analysis aid for a human or downstream system, not an automat
 | Deterministic scrubbing | Before any write: ANSI escapes, control characters, invisible Unicode format characters and variation selectors, HTML, Markdown code markers removed or neutralised; API keys, bearer tokens, GitHub tokens, Google API keys and e-mail addresses replaced. | §7.4 |
 | Pseudonymisation | No plaintext IP address is ever stored: only a salted SHA-256 hash of the /24 (IPv4) or /48 (IPv6) network prefix, and a fingerprint of User-Agent and header-name order without header values. The reference deployment runs without access logs. | §7.3, §7.5 |
 | Bounded storage | Records and repeat records each live in a FIFO ring buffer whose bound is advertised in the manifest; storage does not grow with traffic. | §5.4, §5.4.1 |
-| Single-use tickets | HMAC-SHA256 with constant-time verification; a bounded in-memory replay set and the stored records refuse every second redemption of a ticket, within the bounds stated in the specification. | §5.3 |
+| Single-use tickets | Compact tickets of 48 characters with a 128-bit HMAC-SHA256 tag, verified in constant time; their state stays in bounded memory and is never written for an unrecorded signal; a bounded in-memory replay set and the stored records refuse every second redemption of a ticket, within the bounds stated in the specification. | §5.3, §6.1.5 |
 | Signed receipts | Every receipt is signed with Ed25519 (RFC 8032) over the RFC 8785 form of its signed fields; the private key stays in the node's memory and never reaches its storage; the public key and its identifier are published in the manifest and kept in a key list next to the records. | §6.3.5, §5.4 |
 | Egress lockdown | The application never initiates a connection, and in production a kernel-enforced lockdown makes sure it cannot. | §5.5 |
 | Pull-only data diode | Telemetry leaves the node only through consistent snapshots that the analysis zone pulls; the node exposes no telemetry over HTTP and holds no credentials for other systems. | §5.1, §5.5 |

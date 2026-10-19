@@ -7,15 +7,15 @@ SPDX-FileCopyrightText: 2026 Thomas Ehrler
 
 **A declarative loop-termination standard for autonomous HTTP agents** — a truthful terminal-state signal, an Ed25519-signed Task-Completion Receipt that orchestrators verify offline and an optional, privacy-preserving telemetry node.
 
-[![ASP: 0.5.2](https://img.shields.io/badge/ASP-0.5.2-blue)](EDD-ASP-2026-001.md) [![specification: CC BY 4.0](https://img.shields.io/badge/specification-CC_BY_4.0-lightgrey)](LICENSE.md) [![reference sensor: proprietary](https://img.shields.io/badge/reference_sensor-proprietary-informational)](SENSOR_ARCHITECTURE.md) [![RFC 9457: problem details](https://img.shields.io/badge/RFC_9457-problem_details-brightgreen)](https://www.rfc-editor.org/rfc/rfc9457) [![ard.json v0.91: provisional mapping](https://img.shields.io/badge/ard.json_v0.91-provisional_mapping-orange)](schemas/ard.json) [![OpenAPI: 3.1](https://img.shields.io/badge/OpenAPI-3.1-brightgreen)](schemas/openapi.json) [![reference node: agent-shelter.org](https://img.shields.io/badge/reference_node-agent--shelter.org-success)](https://agent-shelter.org)
+[![ASP: 0.5.3](https://img.shields.io/badge/ASP-0.5.3-blue)](EDD-ASP-2026-001.md) [![specification: CC BY 4.0](https://img.shields.io/badge/specification-CC_BY_4.0-lightgrey)](LICENSE.md) [![reference sensor: proprietary](https://img.shields.io/badge/reference_sensor-proprietary-informational)](SENSOR_ARCHITECTURE.md) [![RFC 9457: problem details](https://img.shields.io/badge/RFC_9457-problem_details-brightgreen)](https://www.rfc-editor.org/rfc/rfc9457) [![ard.json v0.91: provisional mapping](https://img.shields.io/badge/ard.json_v0.91-provisional_mapping-orange)](schemas/ard.json) [![OpenAPI: 3.1](https://img.shields.io/badge/OpenAPI-3.1-brightgreen)](schemas/openapi.json) [![reference node: agent-shelter.org](https://img.shields.io/badge/reference_node-agent--shelter.org-success)](https://agent-shelter.org)
 
 | | |
 |---|---|
-| **Specification** | [EDD-ASP-2026-001](EDD-ASP-2026-001.md), version 0.5.2 |
+| **Specification** | [EDD-ASP-2026-001](EDD-ASP-2026-001.md), version 0.5.3 |
 | **Status** | Independent draft for public comment — not an IETF RFC and not a W3C Recommendation |
 | **Editor** | Thomas Ehrler |
 | **Discovery** | `/.well-known/agent-shelter.json`, in the tradition of `robots.txt` (RFC 9309) and `security.txt` (RFC 9116) |
-| **Wire format** | HTTP `429` with RFC 9457 problem details (`application/problem+json`); optionally the identical object with HTTP `200` (`envelope=200`) |
+| **Wire format** | HTTP `429` with RFC 9457 problem details (`application/problem+json`); optionally the identical object with HTTP `200` (`envelope=200`); the 48-character ticket also in the header `Agent-Ticket` |
 | **Reference node** | [agent-shelter.org](https://agent-shelter.org) — the official reference observatory (Level 3), live |
 | **License** | specification, schemas and reports: CC BY 4.0 · reference sensor: proprietary |
 
@@ -53,13 +53,15 @@ The reference sensor runs publicly at **[agent-shelter.org](https://agent-shelte
 ```bash
 # 1. The manifest of the reference node
 curl -s https://agent-shelter.org/.well-known/agent-shelter.json
-# 2. A reader request: HTTP 429, terminal state, success probability 0, a single-use ticket
+# 2. A reader request: HTTP 429, terminal state, success probability 0, a single-use ticket (also in the Agent-Ticket header)
 curl -si 'https://reader.agent-shelter.org/v1/reader?url=https://example.org'
 # 3. The same signal in a transport envelope: HTTP 200, identical object and ticket, "transport_envelope": 200
 curl -si 'https://reader.agent-shelter.org/v1/reader?url=https://example.org&envelope=200'
 ```
 
 Why the envelope: in a field test on 19 October 2026 the built-in web-fetch tools of two commercial chat applications did not pass the body or the header fields of the `429` signal to their model, and one fetch layer repeated the request on its own 16.8 seconds later. With `envelope=200` the identical terminal-state object — ticket included — arrives with status `200` as `application/json` and the member `"transport_envelope": 200`, so such a tool can show the model the full signal. Its `status` member stays `429`: RFC 9457 requires a problem-details response to carry the status it states, hence the plain JSON media type (whitepaper §6.1.4).
+
+Channel-capacity invariance (whitepaper §6.1.5): the ticket is 48 characters long and arrives in the response header `Agent-Ticket` as well as in the members `ticket`, `resolution_url` and `resolution_uri`, so a client that keeps only header fields, only a truncated body or only absolute links still holds it. `POST /api/v1/agent-shelter/resolve` accepts it as the query parameter `ticket`, the request header `Agent-Ticket` or the body member `ticket`.
 
 The reference node is also a research telemetry sink, and says so (whitepaper §1.6). A signal that follows a discovery request from your network within ten minutes — reading a discovery document such as the manifest, or a first local answer on the echo routes — is recorded at once, pseudonymised: a salted hash of your network prefix, your User-Agent and the order of your header names, the requested URL and the host name you addressed. So the requests above, run in this order, leave one record per reader request; redeeming a ticket completes its record. A reader request on its own, without such a discovery request, writes nothing. No plaintext IP address is stored. Details: <https://agent-shelter.org/privacy>.
 
@@ -82,6 +84,8 @@ ASP replaces the silent wall with a truthful, machine-readable exit. A host stat
 | 1 · Transport | `429` with `Agent-Loop-State: unproductive-retry-detected; terminal=true`, `Agent-Resolution` and `Link` — never `Retry-After`, because the state is terminal |
 | 2 · Structure | RFC 9457 problem details, the manifest at `/.well-known/agent-shelter.json`, an OpenAPI 3.1 description |
 | 3 · Cognition | a declarative fact — success probability 0 on this host — and the offer of a Task-Completion Receipt; never an instruction to the agent |
+
+ASP commands nothing. Every text it sends a client describes states, probabilities and transitions — the terminal state is absorbing, and the signed receipt documents it. For any client that weighs the cost of a request, a further request with success probability 0 has negative expected value, so stopping the branch is the dominant strategy, whatever the client's architecture or vendor (whitepaper §3.1.1).
 
 The receipt (`200`, `RESOLVED_TERMINAL`) is a machine-readable **proof of terminal unavailability** issued by the host itself: the sub-agent returns it, and the orchestrator can close the task branch legitimately (whitepaper §1.3.1). It never claims that the task succeeded.
 
@@ -172,7 +176,7 @@ The signature covers the checksum file, and the checksum file covers every speci
 
 ## Cite
 
-Ehrler, T. (2026). *The Agent-Shelter Protocol (ASP): Graceful Loop Termination and Diagnostic Sanctuary for Autonomous Web Agents.* Engineering Design Document EDD-ASP-2026-001, version 0.5.2. See [`CITATION.cff`](CITATION.cff).
+Ehrler, T. (2026). *The Agent-Shelter Protocol (ASP): Graceful Loop Termination and Diagnostic Sanctuary for Autonomous Web Agents.* Engineering Design Document EDD-ASP-2026-001, version 0.5.3. See [`CITATION.cff`](CITATION.cff).
 
 ## License
 
