@@ -1,7 +1,7 @@
 {
   "schema": "asp-telemetry-feed/1.2",
   "generated_at": "2026-10-17T08:10:00+00:00",
-  "asp_version": "0.5.3",
+  "asp_version": "0.5.4",
   "filters": {
     "limit": 50,
     "exclude_benchmark": false,
@@ -50,7 +50,7 @@
     {
       "event_id": "sample-l3-context-reported",
       "observed_at": "2026-10-17T08:05:25.627+00:00",
-      "asp_version": "0.5.3",
+      "asp_version": "0.5.4",
       "resolution_stage": "L3_CONTEXT_REPORTED",
       "origin": "edge-sensor",
       "ingress_route": "/v1/reader",
@@ -87,10 +87,10 @@
       },
       "receipt_proof": {
         "key_id": "_rb691ylpIcPtcbwKm_LtDwxhaOoSanayUyjdjxOvcs",
-        "receipt_signature": "CpFiHP7a4vCZnAZHLZcJnYbd81_SB-ah0KY3A9ZWt5ZcdvprrcXQr3pAHyMYCvdrOIhE-OWxReHtBOjDU0bdCQ",
+        "receipt_signature": "8xscegGkhTd6EmaCxARlKuKKsizgj0ieh6loSSsjPfOJhuQH3bmn_KJl2n9-w54wPnBHsnRvpIKdSLQgsgvICw",
         "signed": {
           "status": "RESOLVED_TERMINAL",
-          "asp_version": "0.5.3",
+          "asp_version": "0.5.4",
           "receipt_id": "sample-l3-context-reported",
           "ingress_route": "/v1/reader",
           "requested_resource_context": "https://tiles.example.org/z/12/2200/1343.png",
@@ -102,7 +102,7 @@
     {
       "event_id": "sample-l1-signal-observed",
       "observed_at": "2026-10-17T08:00:03.180+00:00",
-      "asp_version": "0.5.3",
+      "asp_version": "0.5.4",
       "resolution_stage": "L1_SIGNAL_OBSERVED",
       "origin": "edge-sensor",
       "ingress_route": "/v1/reader",
@@ -137,7 +137,7 @@
     {
       "event_id": "sample-burst-anchor",
       "observed_at": "2026-10-17T07:50:14.850+00:00",
-      "asp_version": "0.5.3",
+      "asp_version": "0.5.4",
       "resolution_stage": "L2_RECEIPT_REDEEMED",
       "origin": "edge-sensor",
       "ingress_route": "/v1/reader",
@@ -169,10 +169,10 @@
       "context_report": null,
       "receipt_proof": {
         "key_id": "_rb691ylpIcPtcbwKm_LtDwxhaOoSanayUyjdjxOvcs",
-        "receipt_signature": "p6ChWslUaQ0ich_L-guP2VH3hjywhOeO7VIm5CBH4u2HZ3HlFgb13qN_j55XwvxB1pXvAUn6S3t8WzcjYM1SAg",
+        "receipt_signature": "9DpDOWkD_IOqiU9uQypLAbtbiE18FAoM036vobIf0lPXop8-RdIaWz4W9_YGle29TYghF4ulT0K8v78jIgAwCQ",
         "signed": {
           "status": "RESOLVED_TERMINAL",
-          "asp_version": "0.5.3",
+          "asp_version": "0.5.4",
           "receipt_id": "sample-burst-anchor",
           "ingress_route": "/v1/reader",
           "requested_resource_context": "https://research.example.com/datasets/report.json",
@@ -184,7 +184,7 @@
     {
       "event_id": "sample-automated-poller",
       "observed_at": "2026-10-17T07:40:00.037+00:00",
-      "asp_version": "0.5.3",
+      "asp_version": "0.5.4",
       "resolution_stage": "L2_RECEIPT_REDEEMED",
       "origin": "edge-sensor",
       "ingress_route": "/v1/reader",
@@ -216,10 +216,10 @@
       "context_report": null,
       "receipt_proof": {
         "key_id": "_rb691ylpIcPtcbwKm_LtDwxhaOoSanayUyjdjxOvcs",
-        "receipt_signature": "mm41xDM2jjm6DRj2Om4h6LqMgL0jqrMXWqeLMm7lD35MoASDuIng7FrEhrQN8Igf1ADULkSqHgateTOaRHpvDg",
+        "receipt_signature": "qYilDr8ML0e1nOcvwEvxtEJHAVZ8TfIB-W9xuv0vEiYWWQjtglKp5d-oJGTclQA7W0LYzG-oUSMrALLKMZHEAg",
         "signed": {
           "status": "RESOLVED_TERMINAL",
-          "asp_version": "0.5.3",
+          "asp_version": "0.5.4",
           "receipt_id": "sample-automated-poller",
           "ingress_route": "/v1/reader",
           "requested_resource_context": "https://api.example.org/v1/prices",

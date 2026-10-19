@@ -1,5 +1,5 @@
 {
-  "asp_version": "0.5.3",
+  "asp_version": "0.5.4",
   "protocol": "Agent-Shelter Protocol",
   "specification": "EDD-ASP-2026-001",
   "compliance_level": "L3-observatory",
@@ -162,9 +162,9 @@
       "ipv4_prefix": 24,
       "ipv6_prefix": 48
     },
-    "http_fingerprint": "User-Agent and order of request header names",
+    "http_fingerprint": "User-Agent and order of request header names, kept for the signal request and for the redemption request",
     "ingress_host": "host name the request was addressed to (Host header without port; never an IP literal)",
-    "ticket_state": "issue time, subnet hash, ingress route, requested resource context and host name of each issued compact ticket, in memory only, until redemption or at most one minute after the ticket lifetime; never written for a signal that is not recorded",
+    "ticket_state": "issue time, subnet hash, ingress route, requested resource context, host name and HTTP fingerprint of the signal request of each issued compact ticket, in memory only, until redemption or at most one minute after the ticket lifetime; never written for a signal that is not recorded",
     "scrubbing": [
       "ANSI escape sequences",
       "control characters",

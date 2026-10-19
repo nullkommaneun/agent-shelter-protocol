@@ -11,6 +11,6 @@ Copyright 2026 Thomas Ehrler.
 
 License text: <https://creativecommons.org/licenses/by/4.0/legalcode>
 
-Attribution: Ehrler, T. (2026). *The Agent-Shelter Protocol (ASP): Graceful Loop Termination and Diagnostic Sanctuary for Autonomous Web Agents.* Engineering Design Document EDD-ASP-2026-001, version 0.5.3.
+Attribution: Ehrler, T. (2026). *The Agent-Shelter Protocol (ASP): Graceful Loop Termination and Diagnostic Sanctuary for Autonomous Web Agents.* Engineering Design Document EDD-ASP-2026-001, version 0.5.4.
 
 The reference implementation and the laboratory testbed are not part of this package and are not covered by this license.

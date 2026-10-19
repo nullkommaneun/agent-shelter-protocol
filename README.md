@@ -7,11 +7,11 @@ SPDX-FileCopyrightText: 2026 Thomas Ehrler
 
 **A declarative loop-termination standard for autonomous HTTP agents** — a truthful terminal-state signal, an Ed25519-signed Task-Completion Receipt that orchestrators verify offline and an optional, privacy-preserving telemetry node.
 
-[![ASP: 0.5.3](https://img.shields.io/badge/ASP-0.5.3-blue)](EDD-ASP-2026-001.md) [![specification: CC BY 4.0](https://img.shields.io/badge/specification-CC_BY_4.0-lightgrey)](LICENSE.md) [![reference sensor: proprietary](https://img.shields.io/badge/reference_sensor-proprietary-informational)](SENSOR_ARCHITECTURE.md) [![RFC 9457: problem details](https://img.shields.io/badge/RFC_9457-problem_details-brightgreen)](https://www.rfc-editor.org/rfc/rfc9457) [![ard.json v0.91: provisional mapping](https://img.shields.io/badge/ard.json_v0.91-provisional_mapping-orange)](schemas/ard.json) [![OpenAPI: 3.1](https://img.shields.io/badge/OpenAPI-3.1-brightgreen)](schemas/openapi.json) [![reference node: agent-shelter.org](https://img.shields.io/badge/reference_node-agent--shelter.org-success)](https://agent-shelter.org)
+[![ASP: 0.5.4](https://img.shields.io/badge/ASP-0.5.4-blue)](EDD-ASP-2026-001.md) [![specification: CC BY 4.0](https://img.shields.io/badge/specification-CC_BY_4.0-lightgrey)](LICENSE.md) [![reference sensor: proprietary](https://img.shields.io/badge/reference_sensor-proprietary-informational)](SENSOR_ARCHITECTURE.md) [![RFC 9457: problem details](https://img.shields.io/badge/RFC_9457-problem_details-brightgreen)](https://www.rfc-editor.org/rfc/rfc9457) [![ard.json v0.91: provisional mapping](https://img.shields.io/badge/ard.json_v0.91-provisional_mapping-orange)](schemas/ard.json) [![OpenAPI: 3.1](https://img.shields.io/badge/OpenAPI-3.1-brightgreen)](schemas/openapi.json) [![reference node: agent-shelter.org](https://img.shields.io/badge/reference_node-agent--shelter.org-success)](https://agent-shelter.org)
 
 | | |
 |---|---|
-| **Specification** | [EDD-ASP-2026-001](EDD-ASP-2026-001.md), version 0.5.3 |
+| **Specification** | [EDD-ASP-2026-001](EDD-ASP-2026-001.md), version 0.5.4 |
 | **Status** | Independent draft for public comment — not an IETF RFC and not a W3C Recommendation |
 | **Editor** | Thomas Ehrler |
 | **Discovery** | `/.well-known/agent-shelter.json`, in the tradition of `robots.txt` (RFC 9309) and `security.txt` (RFC 9116) |
@@ -176,7 +176,7 @@ The signature covers the checksum file, and the checksum file covers every speci
 
 ## Cite
 
-Ehrler, T. (2026). *The Agent-Shelter Protocol (ASP): Graceful Loop Termination and Diagnostic Sanctuary for Autonomous Web Agents.* Engineering Design Document EDD-ASP-2026-001, version 0.5.3. See [`CITATION.cff`](CITATION.cff).
+Ehrler, T. (2026). *The Agent-Shelter Protocol (ASP): Graceful Loop Termination and Diagnostic Sanctuary for Autonomous Web Agents.* Engineering Design Document EDD-ASP-2026-001, version 0.5.4. See [`CITATION.cff`](CITATION.cff).
 
 ## License
 

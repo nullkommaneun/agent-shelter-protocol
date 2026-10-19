@@ -5,7 +5,7 @@ SPDX-FileCopyrightText: 2026 Thomas Ehrler
 
 # ASP Reference Sensor (L3-Observatory) — Architecture & Capability Datasheet
 
-Companion to the Agent-Shelter Protocol specification EDD-ASP-2026-001, version 0.5.3.
+Companion to the Agent-Shelter Protocol specification EDD-ASP-2026-001, version 0.5.4.
 
 | | |
 |---|---|
@@ -144,7 +144,7 @@ The spectrum is an analysis aid for a human or downstream system, not an automat
 | Zero upstream fetch | No ingress route ever dereferences a client-supplied URL; every URL the node emits is same-origin. SSRF and amplification are excluded by construction. | §7.2 |
 | Request size cap | Request bodies are limited to 8 192 bytes, counted on the bytes read — bodies without `Content-Length` included. | §6.3.2 |
 | Deterministic scrubbing | Before any write: ANSI escapes, control characters, invisible Unicode format characters and variation selectors, HTML, Markdown code markers removed or neutralised; API keys, bearer tokens, GitHub tokens, Google API keys and e-mail addresses replaced. | §7.4 |
-| Pseudonymisation | No plaintext IP address is ever stored: only a salted SHA-256 hash of the /24 (IPv4) or /48 (IPv6) network prefix, and a fingerprint of User-Agent and header-name order without header values. The reference deployment runs without access logs. | §7.3, §7.5 |
+| Pseudonymisation | No plaintext IP address is ever stored: only a salted SHA-256 hash of the /24 (IPv4) or /48 (IPv6) network prefix, and fingerprints of User-Agent and header-name order without header values — of the signal request and of the redemption request, which another client may send. The reference deployment runs without access logs. | §7.3, §7.5 |
 | Bounded storage | Records and repeat records each live in a FIFO ring buffer whose bound is advertised in the manifest; storage does not grow with traffic. | §5.4, §5.4.1 |
 | Single-use tickets | Compact tickets of 48 characters with a 128-bit HMAC-SHA256 tag, verified in constant time; their state stays in bounded memory and is never written for an unrecorded signal; a bounded in-memory replay set and the stored records refuse every second redemption of a ticket, within the bounds stated in the specification. | §5.3, §6.1.5 |
 | Signed receipts | Every receipt is signed with Ed25519 (RFC 8032) over the RFC 8785 form of its signed fields; the private key stays in the node's memory and never reaches its storage; the public key and its identifier are published in the manifest and kept in a key list next to the records. | §6.3.5, §5.4 |

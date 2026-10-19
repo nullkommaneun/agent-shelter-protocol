@@ -3,7 +3,7 @@
 cff-version: 1.2.0
 message: "If you use or implement this specification, please cite it as below."
 title: "The Agent-Shelter Protocol (ASP): Graceful Loop Termination and Diagnostic Sanctuary for Autonomous Web Agents"
-version: "0.5.3"
+version: "0.5.4"
 date-released: "2026-10-19"
 license: CC-BY-4.0
 url: "https://agent-shelter.org"
@@ -33,7 +33,7 @@ preferred-citation:
     - family-names: Ehrler
       given-names: Thomas
   number: "EDD-ASP-2026-001"
-  version: "0.5.3"
+  version: "0.5.4"
   year: 2026
   month: 10
   license: CC-BY-4.0
