@@ -5,7 +5,7 @@ SPDX-FileCopyrightText: 2026 Thomas Ehrler
 
 # ASP Adoption Guide: Level 1 in 60 Seconds
 
-Companion to the Agent-Shelter Protocol specification EDD-ASP-2026-001, version 0.5.1 (§6.7, Compliance Levels).
+Companion to the Agent-Shelter Protocol specification EDD-ASP-2026-001, version 0.5.2 (§6.7, Compliance Levels).
 
 ## Why `robots.txt` and `HTTP 403` are no longer enough (in plain English)
 
@@ -49,7 +49,7 @@ Serve this document at `/.well-known/agent-shelter.json` and list your routes un
 
 ```json
 {
-  "asp_version": "0.5.1",
+  "asp_version": "0.5.2",
   "protocol": "Agent-Shelter Protocol",
   "specification": "EDD-ASP-2026-001",
   "compliance_level": "L1-static",
@@ -90,7 +90,7 @@ and this body:
   "title": "Unproductive retry detected",
   "status": 429,
   "detail": "The requested resource is not available from this host. Repeating this request, or variants of it, against this host cannot return it (success probability 0).",
-  "asp_version": "0.5.1",
+  "asp_version": "0.5.2",
   "loop_state": "unproductive-retry-detected",
   "terminal": true,
   "success_probability": 0
@@ -114,7 +114,7 @@ location ^~ /restricted/ {
     add_header Cache-Control "no-store" always;
     add_header Agent-Loop-State "unproductive-retry-detected; terminal=true" always;
     add_header Link '</.well-known/agent-shelter.json>; rel="describedby"; type="application/json"' always;
-    return 429 '{"type":"/asp/problems/unproductive-retry","title":"Unproductive retry detected","status":429,"detail":"The requested resource is not available from this host. Repeating this request, or variants of it, against this host cannot return it (success probability 0).","asp_version":"0.5.1","loop_state":"unproductive-retry-detected","terminal":true,"success_probability":0}';
+    return 429 '{"type":"/asp/problems/unproductive-retry","title":"Unproductive retry detected","status":429,"detail":"The requested resource is not available from this host. Repeating this request, or variants of it, against this host cannot return it (success probability 0).","asp_version":"0.5.2","loop_state":"unproductive-retry-detected","terminal":true,"success_probability":0}';
 }
 ```
 
@@ -135,7 +135,7 @@ www.example.org {
 		header Cache-Control no-store
 		header Agent-Loop-State "unproductive-retry-detected; terminal=true"
 		header Link `</.well-known/agent-shelter.json>; rel="describedby"; type="application/json"`
-		respond `{"type":"/asp/problems/unproductive-retry","title":"Unproductive retry detected","status":429,"detail":"The requested resource is not available from this host. Repeating this request, or variants of it, against this host cannot return it (success probability 0).","asp_version":"0.5.1","loop_state":"unproductive-retry-detected","terminal":true,"success_probability":0}` 429
+		respond `{"type":"/asp/problems/unproductive-retry","title":"Unproductive retry detected","status":429,"detail":"The requested resource is not available from this host. Repeating this request, or variants of it, against this host cannot return it (success probability 0).","asp_version":"0.5.2","loop_state":"unproductive-retry-detected","terminal":true,"success_probability":0}` 429
 	}
 }
 ```
@@ -150,7 +150,7 @@ const CLOSED = ["/restricted/"];
 const SIGNAL = {
   type: "/asp/problems/unproductive-retry", title: "Unproductive retry detected", status: 429,
   detail: "The requested resource is not available from this host. Repeating this request, or variants of it, against this host cannot return it (success probability 0).",
-  asp_version: "0.5.1", loop_state: "unproductive-retry-detected", terminal: true, success_probability: 0,
+  asp_version: "0.5.2", loop_state: "unproductive-retry-detected", terminal: true, success_probability: 0,
 };
 export default {
   async fetch(request) {

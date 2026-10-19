@@ -5,15 +5,16 @@ SPDX-FileCopyrightText: 2026 Thomas Ehrler
 
 # ASP Reference Sensor (L3-Observatory) — Architecture & Capability Datasheet
 
-Companion to the Agent-Shelter Protocol specification EDD-ASP-2026-001, version 0.5.1.
+Companion to the Agent-Shelter Protocol specification EDD-ASP-2026-001, version 0.5.2.
 
 | | |
 |---|---|
 | Product | ASP Reference Sensor — the reference implementation of the Agent-Shelter Protocol |
 | Compliance level | `L3-observatory` in its default configuration (EDD §6.7.3); `L2-transactional` when silent coalescing is switched off |
 | Interfaces | [`schemas/openapi.json`](schemas/openapi.json) (OpenAPI 3.1), [`schemas/agent-shelter.json`](schemas/agent-shelter.json), [`schemas/ard.json`](schemas/ard.json) |
+| Constrained web-fetch clients | `envelope=200` delivers the identical terminal-state object and ticket with HTTP `200` and `transport_envelope: 200`, for fetch tools that hand their model no body of a 4xx response (EDD §6.1.4) |
 | Data product | pseudonymised records, exported by pull only; feed format [`schemas/telemetry-feed.schema.json`](schemas/telemetry-feed.schema.json), synthetic example [`schemas/sample-telemetry-feed.json`](schemas/sample-telemetry-feed.json) |
-| Live reference deployment | [agent-shelter.org](https://agent-shelter.org) — the official reference observatory (L3), also under `reader.`, `echo.`, `relay.` and `sanctuary.agent-shelter.org` |
+| Live reference deployment | [agent-shelter.org](https://agent-shelter.org) — the official reference observatory (L3), also under `reader.`, `echo.`, `relay.` and `sanctuary.agent-shelter.org`; each record keeps which of these names the client addressed |
 | Source | proprietary, not part of this publication (see §8) |
 
 This datasheet describes what the reference sensor does and which guarantees it gives — not how it is built. Every guarantee below traces back to a normative section of the specification, so it can be checked against the wire, and the specification alone is enough to build a compatible implementation.

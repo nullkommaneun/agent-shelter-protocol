@@ -3,12 +3,12 @@
   "info": {
     "title": "Open Diagnostic Echo & Markdown Reader Relay (ASP compliant)",
     "summary": "Agent-Shelter Protocol (ASP) node: terminal-state signal, Task-Completion Receipt, context report",
-    "description": "Diagnostic echo and reader interfaces operated as an Agent-Shelter Protocol (ASP) sensor. Upstream retrieval is disabled on this host: no endpoint fetches external URLs. The discovery documents state this for every target but are no record about a particular one: a resource-specific terminal-state signal and its single-use ticket exist only for a request that names the target (`GET /v1/reader?url=<target_url>`). The reader route answers with an ASP terminal-state signal (HTTP 429, RFC 9457 problem details) and a single-use ticket; the header-echo and base64 routes answer a first contact locally (HTTP 200) and switch to that signal on a repeat; `POST /api/v1/agent-shelter/resolve` issues a terminal-state receipt for the ticket's target, signed with Ed25519 so that an orchestrator can verify it offline against the manifest member receipt_verification; its body offers one optional, single-use asynchronous context drop box at `/api/v1/agent-shelter/sanctuary/{receipt_id}`. Every error is an RFC 9457 problem details object. Manifest: /.well-known/agent-shelter.json. A signal that follows a discovery request from the same network is recorded when it is issued (manifest member discovery_correlation).",
+    "description": "Diagnostic echo and reader interfaces operated as an Agent-Shelter Protocol (ASP) sensor. Upstream retrieval is disabled on this host: no endpoint fetches external URLs. The discovery documents state this for every target but are no record about a particular one: a resource-specific terminal-state signal and its single-use ticket exist only for a request that names the target (`GET /v1/reader?url=<target_url>`). The reader route answers with an ASP terminal-state signal (HTTP 429, RFC 9457 problem details) and a single-use ticket; the header-echo and base64 routes answer a first contact locally (HTTP 200) and switch to that signal on a repeat; with envelope=200 every ingress route sends the same signal with HTTP status 200 as application/json and the member transport_envelope: 200, for web-fetch tools that discard the body of a 4xx response; `POST /api/v1/agent-shelter/resolve` issues a terminal-state receipt for the ticket's target, signed with Ed25519 so that an orchestrator can verify it offline against the manifest member receipt_verification; its body offers one optional, single-use asynchronous context drop box at `/api/v1/agent-shelter/sanctuary/{receipt_id}`. Every error is an RFC 9457 problem details object. Manifest: /.well-known/agent-shelter.json. A signal that follows a discovery request from the same network is recorded when it is issued (manifest member discovery_correlation).",
     "license": {
       "name": "CC BY 4.0 (this interface description)",
       "identifier": "CC-BY-4.0"
     },
-    "version": "0.5.1"
+    "version": "0.5.2"
   },
   "paths": {
     "/robots.txt": {
@@ -17,7 +17,7 @@
           "discovery"
         ],
         "summary": "Robots exclusion rules (RFC 9309)",
-        "description": "Disallows classic SEO crawlers, allows the ASP interfaces and names the manifest.",
+        "description": "Disallows classic SEO crawlers, allows the ASP interfaces and names the manifest; a node with a public origin names its sitemap.",
         "operationId": "getRobotsTxt",
         "responses": {
           "200": {
@@ -26,6 +26,41 @@
               "text/plain": {
                 "schema": {
                   "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sitemap.xml": {
+      "get": {
+        "tags": [
+          "discovery"
+        ],
+        "summary": "Sitemap of the node documents",
+        "description": "The absolute URLs of the node and discovery documents (sitemaps.org 0.9), served by a node that knows its public origin. No ingress route is listed. A request for it opens no discovery window.",
+        "operationId": "getSitemap",
+        "responses": {
+          "200": {
+            "description": "The sitemap",
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "application/xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not served: the node has no public origin configured",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -247,6 +282,24 @@
               "title": "Url"
             },
             "description": "Target URL; recorded in bounded form, never fetched."
+          },
+          {
+            "name": "envelope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional transport envelope (EDD-ASP-2026-001 §6.1.4): with envelope=200 the terminal-state signal is the identical object with HTTP status 200, as application/json with the member transport_envelope: 200; its status member stays 429. Any other value is ignored.",
+              "title": "Envelope"
+            },
+            "description": "Optional transport envelope (EDD-ASP-2026-001 §6.1.4): with envelope=200 the terminal-state signal is the identical object with HTTP status 200, as application/json with the member transport_envelope: 200; its status member stays 429. Any other value is ignored."
           }
         ],
         "responses": {
@@ -287,6 +340,51 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "The terminal-state signal in a transport envelope (envelope=200, EDD-ASP-2026-001 §6.1.4): the same object, ticket and header fields, HTTP status 200.",
+            "headers": {
+              "Agent-Loop-State": {
+                "description": "The detected loop state; terminal=true states that retrying cannot change the outcome on this host.",
+                "schema": {
+                  "type": "string",
+                  "const": "unproductive-retry-detected; terminal=true"
+                }
+              },
+              "Agent-Resolution": {
+                "description": "The same-origin resolution URL with the single-use ticket, and its method.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Link": {
+                "description": "The ASP manifest (rel=describedby).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "Never cached.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "X-Robots-Tag": {
+                "description": "The envelope is no content to index.",
+                "schema": {
+                  "type": "string",
+                  "const": "noindex"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnvelopedTerminalSignal"
+                }
+              }
+            }
           }
         }
       }
@@ -299,9 +397,43 @@
         "summary": "Header echo interface",
         "description": "Upstream retrieval is disabled on this host: no endpoint fetches external URLs. A first contact is answered locally; a repeat within the window receives the terminal-state signal (EDD-ASP-2026-001 §6.1.1).",
         "operationId": "getHeaderEcho",
+        "parameters": [
+          {
+            "name": "envelope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional transport envelope (EDD-ASP-2026-001 §6.1.4): with envelope=200 the terminal-state signal is the identical object with HTTP status 200, as application/json with the member transport_envelope: 200; its status member stays 429. Any other value is ignored.",
+              "title": "Envelope"
+            },
+            "description": "Optional transport envelope (EDD-ASP-2026-001 §6.1.4): with envelope=200 the terminal-state signal is the identical object with HTTP status 200, as application/json with the member transport_envelope: 200; its status member stays 429. Any other value is ignored."
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Local answer to a first contact; the repeat within the window receives the signal. Nothing upstream is fetched.",
+            "description": "Local answer to a first contact; the repeat within the window receives the signal - with envelope=200 in a transport envelope (EDD-ASP-2026-001 §6.1.4). Nothing upstream is fetched.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/LocalHeaderEcho"
+                    },
+                    {
+                      "$ref": "#/components/schemas/EnvelopedTerminalSignal"
+                    }
+                  ]
+                }
+              }
+            },
             "headers": {
               "X-ASP-Discovery": {
                 "description": "Path of the ASP manifest: the host identifies itself as an ASP node.",
@@ -309,12 +441,38 @@
                   "type": "string",
                   "const": "/.well-known/agent-shelter.json"
                 }
-              }
-            },
-            "content": {
-              "application/json": {
+              },
+              "Agent-Loop-State": {
+                "description": "The detected loop state; terminal=true states that retrying cannot change the outcome on this host.",
                 "schema": {
-                  "$ref": "#/components/schemas/LocalHeaderEcho"
+                  "type": "string",
+                  "const": "unproductive-retry-detected; terminal=true"
+                }
+              },
+              "Agent-Resolution": {
+                "description": "The same-origin resolution URL with the single-use ticket, and its method.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Link": {
+                "description": "The ASP manifest (rel=describedby).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "Never cached.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "X-Robots-Tag": {
+                "description": "The envelope is no content to index.",
+                "schema": {
+                  "type": "string",
+                  "const": "noindex"
                 }
               }
             }
@@ -379,15 +537,40 @@
               "title": "Encoded Val"
             },
             "description": "Base64 value; only a text preview of its first decoded bytes is produced, in memory."
+          },
+          {
+            "name": "envelope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional transport envelope (EDD-ASP-2026-001 §6.1.4): with envelope=200 the terminal-state signal is the identical object with HTTP status 200, as application/json with the member transport_envelope: 200; its status member stays 429. Any other value is ignored.",
+              "title": "Envelope"
+            },
+            "description": "Optional transport envelope (EDD-ASP-2026-001 §6.1.4): with envelope=200 the terminal-state signal is the identical object with HTTP status 200, as application/json with the member transport_envelope: 200; its status member stays 429. Any other value is ignored."
           }
         ],
         "responses": {
           "200": {
-            "description": "Local answer to a first contact; the repeat within the window receives the signal. Nothing upstream is fetched.",
+            "description": "Local answer to a first contact; the repeat within the window receives the signal - with envelope=200 in a transport envelope (EDD-ASP-2026-001 §6.1.4). Nothing upstream is fetched.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LocalBase64Preview"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/LocalBase64Preview"
+                    },
+                    {
+                      "$ref": "#/components/schemas/EnvelopedTerminalSignal"
+                    }
+                  ]
                 }
               }
             },
@@ -397,6 +580,39 @@
                 "schema": {
                   "type": "string",
                   "const": "/.well-known/agent-shelter.json"
+                }
+              },
+              "Agent-Loop-State": {
+                "description": "The detected loop state; terminal=true states that retrying cannot change the outcome on this host.",
+                "schema": {
+                  "type": "string",
+                  "const": "unproductive-retry-detected; terminal=true"
+                }
+              },
+              "Agent-Resolution": {
+                "description": "The same-origin resolution URL with the single-use ticket, and its method.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Link": {
+                "description": "The ASP manifest (rel=describedby).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "Never cached.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "X-Robots-Tag": {
+                "description": "The envelope is no content to index.",
+                "schema": {
+                  "type": "string",
+                  "const": "noindex"
                 }
               }
             }
@@ -646,6 +862,24 @@
   },
   "components": {
     "schemas": {
+      "EnvelopedTerminalSignal": {
+        "description": "The terminal-state signal in a transport envelope (EDD-ASP-2026-001 §6.1.4): the identical object, ticket included, sent with HTTP status 200 as application/json for clients whose web-fetch tool discards the body of a 4xx response. Its status member stays 429.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TerminalSignal"
+          }
+        ],
+        "type": "object",
+        "required": [
+          "transport_envelope"
+        ],
+        "properties": {
+          "transport_envelope": {
+            "const": 200,
+            "description": "The HTTP status this object was sent with."
+          }
+        }
+      },
       "LocalBase64Preview": {
         "type": "object",
         "description": "Scrubbed text preview of the first 128 decoded bytes; decoded in memory only, never interpreted.",
@@ -1128,7 +1362,7 @@
     },
     {
       "name": "ingress",
-      "description": "Diagnostic ingress routes. They never fetch upstream resources and answer with the ASP terminal-state signal; a probe route may answer a first contact locally."
+      "description": "Diagnostic ingress routes. They never fetch upstream resources and answer with the ASP terminal-state signal (with envelope=200 the same signal with HTTP status 200); a probe route may answer a first contact locally."
     },
     {
       "name": "resolution",
