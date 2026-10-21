@@ -5,7 +5,7 @@ SPDX-FileCopyrightText: 2026 Thomas Ehrler
 
 # ASP Reference Sensor (L3-Observatory) — Architecture & Capability Datasheet
 
-Companion to the Agent-Shelter Protocol specification EDD-ASP-2026-001, version 0.5.4.
+Companion to the Agent-Shelter Protocol specification EDD-ASP-2026-001, version 0.5.6.
 
 | | |
 |---|---|
@@ -35,7 +35,7 @@ This datasheet describes what the reference sensor does and which guarantees it 
 
 ## 2. The 3-phase cognitive telemetry model
 
-A client that meets an ASP node passes through up to three phases, and the sensor measures each of them on its own clock — without a database write for a single, uncorrelated request.
+A client that meets an ASP node passes through up to three phases, and the sensor measures each of them on its own clock — without a database write for a single, uncorrelated request. Phases 2 and 3 are open to every runtime: the ticket is redeemed by `POST` or, for a runtime that can only read, by `GET` — the same single-use transition and the same signed receipt (EDD §6.3.2) —, and the context report is left by `POST` or by `GET` with two query parameters; a bare `GET` of the drop box, as a link preloader sends it, archives nothing and leaves the drop box open (EDD §6.6.2).
 
 ```
  client                                                                   sensor
@@ -65,9 +65,10 @@ A client that meets an ASP node passes through up to three phases, and the senso
 | 3 · Asynchronous context reporting | `t2` → `t3` | `sanctuary_latency_ms` | `L3_CONTEXT_REPORTED` | the arrival time of the single optional context report is stored with the record; the interval is derived in the analysis zone (§6.6) |
 
 - **No database load from single scrapers.** A request that follows no discovery request costs constant work — a hash, a random draw, an HMAC — and writes nothing. Before a record exists, all state is in bounded memory: the discovery table, whose window is advertised in the manifest (`discovery_correlation.window_seconds`), and the ticket states, kept for the ticket lifetime and dropped on redemption.
+- **The funnel above phase 1, in aggregate only.** Requests for the node and discovery documents — `/`, `/robots.txt`, `/llms.txt`, the sitemap, the manifest, `ard.json`, `/openapi.json` — are counted per document and client class: a label derived from the User-Agent, such as a declared crawler or agent token, a browser or an HTTP library. A counter holds a number and the time of the latest request, nothing else; the counts collect in memory and are written at most once per flush interval, so a flood of document requests costs no write of its own (EDD §5.4.3). The manifest declares it (`discovery_counters`).
 - **One record per ticket.** The three stages are the same row, completed in place; a ticket is redeemable exactly once, and a context report is accepted once per receipt.
 - **Phases may be absent, and that is information.** A client that redeems without reading any discovery document has no phase 1. A client that reads the documents, receives the signal and stops leaves a record at `L1_SIGNAL_OBSERVED` — the observable counterpart of a loop that the `429` alone ended.
-- **Discovery states the procedure, not just the verdict.** The discovery documents describe the node, not a target: they say that nothing can be retrieved through it. `/llms.txt` therefore opens with the protocol procedure — a target-specific signal and a signed receipt exist only for a request that names the target (`GET /v1/reader?url=<target_url>`) — so a client that reasons from the documents alone still learns how to obtain a proof its orchestrator can check (EDD §6.5).
+- **Discovery states the procedure, not just the verdict.** The discovery documents describe the node, not a target: they say that nothing can be retrieved through it. `/llms.txt` therefore opens with the protocol procedure — a target-specific signal and a signed receipt exist only for a request that names the target (`GET /v1/reader?url=<target_url>`) — so a client that reasons from the documents alone still learns how to obtain a proof its orchestrator can check (EDD §6.5). The signal says the same about itself: it holds the ticket, not the proof — the signed receipt exists only in the response of the resolution (EDD §6.3.1).
 - **Signed receipts.** Every receipt carries an Ed25519 signature over its key fields — status, protocol version, receipt id, route, requested resource, redemption time, outcome. The manifest publishes the public key, its RFC 7638 identifier and the signed fields (`receipt_verification`), so the client's orchestrator verifies the receipt offline, without asking the node again (EDD §6.3.5). The record keeps the signature, and the telemetry feed passes it on with the receipt's signed fields.
 - **Timing evidence, not mind reading.** The phase names describe protocol steps. Every interval includes network, tooling, queueing and model inference time; none of them is a measure of "thought" in any human sense. In the laboratory, scripted clients and language models separate clearly in phase 2; the sensor classifies the latency internally — without ever changing a response because of it.
 

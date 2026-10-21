@@ -7,7 +7,7 @@
   "protocols": [
     {
       "name": "agent-shelter",
-      "version": "0.5.4",
+      "version": "0.5.6",
       "manifest": "/.well-known/agent-shelter.json"
     }
   ],
@@ -33,7 +33,17 @@
       "behaviour": "asp-receipt"
     },
     {
+      "method": "GET",
+      "path": "/api/v1/agent-shelter/resolve",
+      "behaviour": "asp-receipt"
+    },
+    {
       "method": "POST",
+      "path": "/api/v1/agent-shelter/sanctuary/{receipt_id}",
+      "behaviour": "asp-sanctuary-note"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/agent-shelter/sanctuary/{receipt_id}",
       "behaviour": "asp-sanctuary-note"
     }

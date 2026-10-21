@@ -3,12 +3,12 @@
   "info": {
     "title": "Open Diagnostic Echo & Markdown Reader Relay (ASP compliant)",
     "summary": "Agent-Shelter Protocol (ASP) node: terminal-state signal, Task-Completion Receipt, context report",
-    "description": "Diagnostic echo and reader interfaces operated as an Agent-Shelter Protocol (ASP) sensor. Upstream retrieval is disabled on this host: no endpoint fetches external URLs. The discovery documents state this for every target but are no record about a particular one: a resource-specific terminal-state signal and its single-use ticket exist only for a request that names the target (`GET /v1/reader?url=<target_url>`). The reader route answers with an ASP terminal-state signal (HTTP 429, RFC 9457 problem details) and a single-use ticket; the header-echo and base64 routes answer a first contact locally (HTTP 200) and switch to that signal on a repeat; with envelope=200 every ingress route sends the same signal with HTTP status 200 as application/json and the member transport_envelope: 200, for web-fetch tools that discard the body of a 4xx response; the ticket (48 characters) is in the header Agent-Ticket and the members ticket, resolution_url and resolution_uri; `POST /api/v1/agent-shelter/resolve` maps it - from the query parameter ticket, the request header Agent-Ticket or the body member ticket - to a terminal-state receipt for the ticket's target, signed with Ed25519 so that an orchestrator can verify it offline against the manifest member receipt_verification; its body offers one optional, single-use asynchronous context drop box at `/api/v1/agent-shelter/sanctuary/{receipt_id}`. Every error is an RFC 9457 problem details object. Manifest: /.well-known/agent-shelter.json. A signal that follows a discovery request from the same network is recorded when it is issued (manifest member discovery_correlation).",
+    "description": "Diagnostic echo and reader interfaces operated as an Agent-Shelter Protocol (ASP) sensor. Upstream retrieval is disabled on this host: no endpoint fetches external URLs. The discovery documents state this for every target but are no record about a particular one: a resource-specific terminal-state signal and its single-use ticket exist only for a request that names the target (`GET /v1/reader?url=<target_url>`). The reader route answers with an ASP terminal-state signal (HTTP 429, RFC 9457 problem details) and a single-use ticket; the header-echo and base64 routes answer a first contact locally (HTTP 200) and switch to that signal on a repeat; with envelope=200 every ingress route sends the same signal with HTTP status 200 as application/json and the member transport_envelope: 200, for web-fetch tools that discard the body of a 4xx response; the ticket (48 characters) is in the header Agent-Ticket and the members ticket, resolution_url and resolution_uri; `POST /api/v1/agent-shelter/resolve` maps it - from the query parameter ticket, the request header Agent-Ticket or the body member ticket - to a terminal-state receipt for the ticket's target, signed with Ed25519 so that an orchestrator can verify it offline against the manifest member receipt_verification, and `GET /api/v1/agent-shelter/resolve` performs the same transition for clients that issue GET requests only; the receipt's body offers one optional, single-use asynchronous context drop box at `/api/v1/agent-shelter/sanctuary/{receipt_id}`, which takes the report by POST (JSON body) or by GET (query parameters workflow_summary and agent_questions_or_notes). Every error is an RFC 9457 problem details object. Manifest: /.well-known/agent-shelter.json. A signal that follows a discovery request from the same network is recorded when it is issued (manifest member discovery_correlation).",
     "license": {
       "name": "CC BY 4.0 (this interface description)",
       "identifier": "CC-BY-4.0"
     },
-    "version": "0.5.4"
+    "version": "0.5.6"
   },
   "paths": {
     "/robots.txt": {
@@ -706,7 +706,7 @@
           "resolution"
         ],
         "summary": "State transition mapping a valid ticket to an Ed25519-signed RESOLVED_TERMINAL receipt",
-        "description": "Single use; a valid ticket is redeemable at once and until its lifetime ends. Ticket channels, in this order of precedence: the query parameter ticket, the request header Agent-Ticket, the body member ticket. The other body members are optional telemetry (EDD-ASP-2026-001 §6.3.2).",
+        "description": "Single use; a valid ticket is redeemable at once and until its lifetime ends. Ticket channels, in this order of precedence: the query parameter ticket, the request header Agent-Ticket, the body member ticket. The other body members are optional telemetry (EDD-ASP-2026-001 §6.3.2). The same transition exists as GET /api/v1/agent-shelter/resolve.",
         "operationId": "postResolve",
         "parameters": [
           {
@@ -775,7 +775,7 @@
             }
           },
           "400": {
-            "description": "ticket-required: no ticket in the query, the header or the body",
+            "description": "ticket-required: no ticket in any of the method's ticket channels",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -795,7 +795,7 @@
             }
           },
           "409": {
-            "description": "ticket-replayed: the ticket was already redeemed",
+            "description": "ticket-replayed: the ticket was already redeemed, by either method",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -826,6 +826,200 @@
           },
           "422": {
             "description": "invalid-request: the body does not match the schema",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "resolution"
+        ],
+        "summary": "The same state transition for runtimes that issue GET requests only",
+        "description": "Method-agnostic resolution (EDD-ASP-2026-001 §6.3.2): the single-use transition of POST /api/v1/agent-shelter/resolve - the same verification, the same record and the same signed receipt - with the ticket from the query parameter ticket or the request header Agent-Ticket and the optional telemetry members as query parameters. A ticket redeemed by either method is redeemed for both. HEAD is not answered, so it consumes nothing.",
+        "operationId": "getResolve",
+        "parameters": [
+          {
+            "name": "ticket",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The single-use ticket from the signal (member ticket, header Agent-Ticket, resolution_url); first channel.",
+              "title": "Ticket"
+            },
+            "description": "The single-use ticket from the signal (member ticket, header Agent-Ticket, resolution_url); first channel."
+          },
+          {
+            "name": "client_runtime_class",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 128
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional telemetry, as in the POST body.",
+              "title": "Client Runtime Class"
+            },
+            "description": "Optional telemetry, as in the POST body."
+          },
+          {
+            "name": "loop_iteration_count",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional telemetry, as in the POST body.",
+              "title": "Loop Iteration Count"
+            },
+            "description": "Optional telemetry, as in the POST body."
+          },
+          {
+            "name": "last_error_code_observed",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional telemetry, as in the POST body.",
+              "title": "Last Error Code Observed"
+            },
+            "description": "Optional telemetry, as in the POST body."
+          },
+          {
+            "name": "diagnostic_note",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 2000
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional telemetry, as in the POST body.",
+              "title": "Diagnostic Note"
+            },
+            "description": "Optional telemetry, as in the POST body."
+          },
+          {
+            "name": "Agent-Ticket",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The single-use ticket as a request header; used when the query parameter is absent.",
+              "title": "Agent-Ticket"
+            },
+            "description": "The single-use ticket as a request header; used when the query parameter is absent."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task-Completion Receipt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskCompletionReceipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ticket-required: no ticket in any of the method's ticket channels",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "invalid-ticket (malformed or forged), or ticket-expired (outside its lifetime; not consumed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ticket-replayed: the ticket was already redeemed, by either method",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ticket-state-unavailable: an authentic compact ticket whose state this node no longer holds (restart or capacity); not redeemable here",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "payload-too-large: request bodies are limited to 8192 bytes",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "invalid-request: a query parameter does not match the schema",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -927,6 +1121,117 @@
             }
           }
         }
+      },
+      "get": {
+        "tags": [
+          "resolution"
+        ],
+        "summary": "The same single context report for runtimes that issue GET requests only",
+        "description": "The drop box by GET (EDD-ASP-2026-001 §6.6.2): the report of the POST form, taken from the query parameters workflow_summary and agent_questions_or_notes, with the same limits and scrubbing, archived once per receipt for both methods. A GET without a non-empty value of either parameter - a link preloader's request, for example - archives nothing and is answered with invalid-sanctuary-payload (400); the drop box stays open. HEAD is not answered.",
+        "operationId": "getSanctuaryNote",
+        "parameters": [
+          {
+            "name": "receipt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The receipt_id of the receipt (its dropbox_url).",
+              "title": "Receipt Id"
+            },
+            "description": "The receipt_id of the receipt (its dropbox_url)."
+          },
+          {
+            "name": "workflow_summary",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 2000
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The report's summary, as in the POST body.",
+              "title": "Workflow Summary"
+            },
+            "description": "The report's summary, as in the POST body."
+          },
+          {
+            "name": "agent_questions_or_notes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 2000
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The report's note, as in the POST body.",
+              "title": "Agent Questions Or Notes"
+            },
+            "description": "The report's note, as in the POST body."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Context report archived; this path is now terminal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SanctuaryConfirmation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid-sanctuary-payload: neither query parameter carries a non-empty value; nothing archived, the drop box stays open",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "receipt-not-found: no receipt with this identifier (an unredeemed ticket included)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "sanctuary-already-submitted: the single report was archived; terminal",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "invalid-request: a query parameter does not match the schema",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
       }
     }
   },
@@ -1015,14 +1320,16 @@
       },
       "NodeDocument": {
         "type": "object",
-        "description": "Self-description of the node: who runs it, both of its roles, its documents.",
+        "description": "Self-description of the node: who runs it, both of its roles, its documents, the stages a client can reach and where the signed proof is.",
         "required": [
           "asp_version",
           "node",
           "statement",
           "upstream_fetch",
           "operator",
-          "links"
+          "links",
+          "stages",
+          "proof_location"
         ],
         "properties": {
           "asp_version": {
@@ -1045,6 +1352,30 @@
             "additionalProperties": {
               "type": "string"
             }
+          },
+          "stages": {
+            "type": "object",
+            "description": "The resolution stages (EDD-ASP-2026-001 §6.7): what each one is and the transition that reaches it.",
+            "required": [
+              "L1_SIGNAL_OBSERVED",
+              "L2_RECEIPT_REDEEMED",
+              "L3_CONTEXT_REPORTED"
+            ],
+            "properties": {
+              "L1_SIGNAL_OBSERVED": {
+                "type": "string"
+              },
+              "L2_RECEIPT_REDEEMED": {
+                "type": "string"
+              },
+              "L3_CONTEXT_REPORTED": {
+                "type": "string"
+              }
+            }
+          },
+          "proof_location": {
+            "type": "string",
+            "description": "The signal carries a ticket; the signed proof exists only in the receipt of its resolution."
           }
         }
       },
@@ -1186,8 +1517,10 @@
           "operator_message",
           "dropbox_url",
           "method",
+          "methods",
           "max_submissions",
           "expected_body",
+          "get_parameters",
           "privacy_reminder"
         ],
         "properties": {
@@ -1204,11 +1537,33 @@
           "method": {
             "const": "POST"
           },
+          "methods": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "POST",
+                "GET"
+              ]
+            },
+            "description": "Every method that archives the report: POST with the body, GET with the query parameters in get_parameters (EDD-ASP-2026-001 §6.6.2)."
+          },
           "max_submissions": {
             "const": 1
           },
           "expected_body": {
             "$ref": "#/components/schemas/SanctuaryRequest"
+          },
+          "get_parameters": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "workflow_summary",
+                "agent_questions_or_notes"
+              ]
+            },
+            "description": "The query parameters of the GET form; a GET without a non-empty value of one of them archives nothing (invalid-sanctuary-payload)."
           },
           "privacy_reminder": {
             "type": "string"
@@ -1381,6 +1736,7 @@
           "ticket",
           "resolution_url",
           "resolution_method",
+          "resolution_methods",
           "expected_post_body",
           "ticket_ttl_seconds",
           "receipt_status"
@@ -1434,6 +1790,17 @@
           "resolution_method": {
             "const": "POST"
           },
+          "resolution_methods": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "POST",
+                "GET"
+              ]
+            },
+            "description": "Every method that performs the resolution: POST with the body template, and GET with the ticket and the optional telemetry as query parameters (EDD-ASP-2026-001 §6.3.2)."
+          },
           "expected_post_body": {
             "$ref": "#/components/schemas/ResolveRequest"
           },
@@ -1451,7 +1818,7 @@
   "tags": [
     {
       "name": "discovery",
-      "description": "Discovery and node documents. They write nothing; on a node with discovery correlation a request for a discovery document opens an in-memory window (manifest member discovery_correlation)."
+      "description": "Discovery and node documents. They create no record; on a node with discovery correlation a request for a discovery document opens an in-memory window (manifest member discovery_correlation). Requests for them are counted in aggregate per document and client class, never per request (manifest member discovery_counters)."
     },
     {
       "name": "ingress",
@@ -1459,7 +1826,7 @@
     },
     {
       "name": "resolution",
-      "description": "Single-use resolution to a Task-Completion Receipt, and the optional single-use context-report drop box."
+      "description": "Single-use resolution to a Task-Completion Receipt, by POST or GET, and the optional single-use context-report drop box, by POST or GET as well."
     }
   ]
 }

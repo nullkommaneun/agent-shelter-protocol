@@ -1,5 +1,5 @@
 {
-  "asp_version": "0.5.4",
+  "asp_version": "0.5.6",
   "protocol": "Agent-Shelter Protocol",
   "specification": "EDD-ASP-2026-001",
   "compliance_level": "L3-observatory",
@@ -63,6 +63,10 @@
   "resolution": {
     "endpoint": "/api/v1/agent-shelter/resolve",
     "method": "POST",
+    "methods": [
+      "POST",
+      "GET"
+    ],
     "ticket_parameter": "ticket",
     "ticket_ttl_seconds": 600,
     "ticket_format": {
@@ -89,8 +93,19 @@
         "query_parameter",
         "request_header",
         "body_member"
+      ],
+      "get": [
+        "query_parameter",
+        "request_header"
       ]
     },
+    "get_telemetry_parameters": [
+      "client_runtime_class",
+      "loop_iteration_count",
+      "last_error_code_observed",
+      "diagnostic_note"
+    ],
+    "methods_statement": "POST and GET perform the same single-use state transition and return the same signed receipt. POST takes the ticket from the query parameter, the request header or the body member and the optional telemetry from the body; GET takes the ticket from the query parameter or the request header and the optional telemetry from the query parameters listed in get_telemetry_parameters. A ticket redeemed by either method is redeemed for both. HEAD is not answered.",
     "single_use": true,
     "immediate_redemption_allowed": true,
     "uniform_response_contract": true,
@@ -127,6 +142,15 @@
   "sanctuary": {
     "endpoint": "/api/v1/agent-shelter/sanctuary/{receipt_id}",
     "method": "POST",
+    "methods": [
+      "POST",
+      "GET"
+    ],
+    "get_parameters": [
+      "workflow_summary",
+      "agent_questions_or_notes"
+    ],
+    "methods_statement": "POST and GET archive the same single context report per receipt. POST takes it from the JSON body, whose members are both optional; GET takes it from the query parameters listed in get_parameters and archives it only when at least one of them has a non-empty value. A GET with neither archives nothing: it is answered with invalid-sanctuary-payload (400), and the drop box stays open. HEAD is not answered.",
     "optional": true,
     "max_submissions": 1,
     "single_submission_conflict_status": 409,
@@ -155,6 +179,28 @@
     ],
     "statement": "A terminal signal that follows a discovery request from the same network prefix within the window (a request to one of the discovery routes; for /headers and /base64/{encoded_val} a first contact answered locally) is recorded when it is issued, with resolution stage L1_SIGNAL_OBSERVED. Redeeming its ticket completes that record (L2_RECEIPT_REDEEMED); a context report raises it to L3_CONTEXT_REPORTED. A signal without such a discovery request is not recorded. The signal and every response are the same either way."
   },
+  "discovery_counters": {
+    "enabled": true,
+    "routes": [
+      "/",
+      "/robots.txt",
+      "/llms.txt",
+      "/.well-known/agent-shelter.json",
+      "/.well-known/ard.json",
+      "/openapi.json"
+    ],
+    "key": [
+      "route",
+      "client_class"
+    ],
+    "values": [
+      "hit_count",
+      "last_seen_ms"
+    ],
+    "client_class": "a label of a fixed, implementation-defined vocabulary derived from the User-Agent",
+    "flush_interval_seconds": 60,
+    "statement": "Requests for the listed node and discovery documents are counted per route and client class: the number of requests and the time of the most recent one. The client class is a label of a fixed vocabulary derived from the User-Agent - a declared crawler or agent token, a browser, an HTTP library; the User-Agent text, the address, the subnet hash and the time of a single request are not kept. The counts collect in memory and are written in aggregate, never per request."
+  },
   "privacy": {
     "plaintext_ip_storage": false,
     "subnet_hash": {
@@ -165,6 +211,7 @@
     "http_fingerprint": "User-Agent and order of request header names, kept for the signal request and for the redemption request",
     "ingress_host": "host name the request was addressed to (Host header without port; never an IP literal)",
     "ticket_state": "issue time, subnet hash, ingress route, requested resource context, host name and HTTP fingerprint of the signal request of each issued compact ticket, in memory only, until redemption or at most one minute after the ticket lifetime; never written for a signal that is not recorded",
+    "discovery_counters": "per counted document and client class: the number of requests and the time of the most recent one; no address, subnet hash, User-Agent text or single request",
     "scrubbing": [
       "ANSI escape sequences",
       "control characters",
@@ -195,7 +242,8 @@
     "/asp/problems/payload-too-large": 413,
     "/asp/problems/invalid-request": 422,
     "/asp/problems/receipt-not-found": 404,
-    "/asp/problems/sanctuary-already-submitted": 409
+    "/asp/problems/sanctuary-already-submitted": 409,
+    "/asp/problems/invalid-sanctuary-payload": 400
   },
   "discovery": {
     "llms_txt": "/llms.txt",
