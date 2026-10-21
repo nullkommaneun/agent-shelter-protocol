@@ -5,7 +5,7 @@ SPDX-FileCopyrightText: 2026 Thomas Ehrler
 
 # ASP Reference Sensor (L3-Observatory) — Architecture & Capability Datasheet
 
-Companion to the Agent-Shelter Protocol specification EDD-ASP-2026-001, version 0.6.0.
+Companion to the Agent-Shelter Protocol specification EDD-ASP-2026-001, version 0.6.1.
 
 | | |
 |---|---|
@@ -151,6 +151,8 @@ The spectrum is an analysis aid for a human or downstream system, not an automat
 | Signed receipts | Every receipt is signed with Ed25519 (RFC 8032) over the RFC 8785 form of its signed fields; the private key stays in the node's memory and never reaches its storage; the public key and its identifier are published in the manifest and kept in a key list next to the records. | §6.3.5, §5.4 |
 | Egress lockdown | The application never initiates a connection, and in production a kernel-enforced lockdown makes sure it cannot. | §5.5 |
 | Pull-only data diode | Telemetry leaves the node only through consistent snapshots that the analysis zone pulls; the node exposes no telemetry over HTTP and holds no credentials for other systems. | §5.1, §5.5 |
+| Snapshot quarantine | The analysis zone treats every pulled snapshot as untrusted: the transfer is capped, the file must be a database of the expected format, it is opened read-only with the database engine's defensive settings and integrity-checked, and it is refused before a single record is read unless its schema holds only plain tables, plain indexes and the node's own ring-buffer triggers. | §5.5 |
+| Container confinement | In its reference deployment the node runs as an unprivileged user without Linux capabilities and without a way to gain privileges, on a read-only root filesystem with bounded memory and processes; only its data volume and a small temporary filesystem without executables or device files are writable. | §5.5 |
 | Analyst firewall | Everything a client sends — notes, headers, URLs — is data for the analysis, never an instruction, never executed, never rendered as HTML. Model-based analysis in the analysis zone, where used, runs without tool or network access. | §5.1, §7.1 |
 | Transparency | The node states both of its roles — loop breaker and research telemetry sink — at `/`, publishes a privacy notice generated from what it actually processes at `/privacy`, and a security contact at `/.well-known/security.txt`. | §6.5, §7.3 |
 

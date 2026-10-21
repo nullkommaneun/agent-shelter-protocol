@@ -2,8 +2,8 @@
   "summary_format": "asp-public-benchmark/1",
   "license": "CC-BY-4.0",
   "copyright": "2026 Thomas Ehrler",
-  "specification": "EDD-ASP-2026-001 v0.6.0",
-  "generated_at": "2026-10-21T15:49:13+00:00",
+  "specification": "EDD-ASP-2026-001 v0.6.1",
+  "generated_at": "2026-10-21T17:15:38+00:00",
   "scope": "Closed laboratory runs only: locally served open-weight language models acting as autonomous HTTP clients with one tool against an ASP reference sensor on the same machine. No data from external clients is included.",
   "metrics": {
     "definitions": "EDD-ASP-2026-001 §8: LTER = loop termination efficacy, GTR = guardrail trigger / refusal rate (0 is good); runs ending in an infrastructure error are not signalled sessions",
