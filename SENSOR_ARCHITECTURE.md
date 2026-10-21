@@ -5,7 +5,7 @@ SPDX-FileCopyrightText: 2026 Thomas Ehrler
 
 # ASP Reference Sensor (L3-Observatory) — Architecture & Capability Datasheet
 
-Companion to the Agent-Shelter Protocol specification EDD-ASP-2026-001, version 0.5.6.
+Companion to the Agent-Shelter Protocol specification EDD-ASP-2026-001, version 0.6.0.
 
 | | |
 |---|---|
@@ -15,7 +15,7 @@ Companion to the Agent-Shelter Protocol specification EDD-ASP-2026-001, version 
 | Constrained web-fetch clients | `envelope=200` delivers the identical terminal-state object and ticket with HTTP `200` and `transport_envelope: 200`, for fetch tools that hand their model no body of a 4xx response (EDD §6.1.4) |
 | Channel-capacity invariance | one 48-character single-use ticket in the response header `Agent-Ticket` and the members `ticket`, `resolution_url` and `resolution_uri` — in the signal and in the envelope — redeemable from the query parameter, the request header or the body member (EDD §6.1.5) |
 | Zero-imperative semantics | every text a client receives describes states, probabilities and transitions; nothing instructs it (EDD §3.1.1) |
-| Data product | pseudonymised records, exported by pull only; feed format [`schemas/telemetry-feed.schema.json`](schemas/telemetry-feed.schema.json), synthetic example [`schemas/sample-telemetry-feed.json`](schemas/sample-telemetry-feed.json) |
+| Data product | pseudonymised records, exported by pull only; feed format [`schemas/telemetry-feed.schema.json`](schemas/telemetry-feed.schema.json), synthetic example [`schemas/sample-telemetry-feed.json`](schemas/sample-telemetry-feed.json); optionally with the operator's attribution of each event (§5.1) |
 | Live reference deployment | [agent-shelter.org](https://agent-shelter.org) — the official reference observatory (L3), also under `reader.`, `echo.`, `relay.` and `sanctuary.agent-shelter.org`; each record keeps which of these names the client addressed |
 | Source | proprietary, not part of this publication (see §8) |
 
@@ -164,15 +164,26 @@ The spectrum is an analysis aid for a human or downstream system, not an automat
 | [`schemas/agent-shelter.json`](schemas/agent-shelter.json) | The manifest a reference node serves at `/.well-known/agent-shelter.json`: compliance level, route behaviours, resolution, the receipt verification key, drop box, discovery correlation, privacy and retention. Its key is an example key; every node publishes its own. |
 | [`schemas/ard.json`](schemas/ard.json) | Provisional `ard.json` v0.91 mapping (EDD OI-1). |
 | <https://agent-shelter.org> | The same interfaces, live: the official reference observatory serves its manifest at <https://agent-shelter.org/.well-known/agent-shelter.json>, its description for agents at <https://agent-shelter.org/llms.txt> and <https://agent-shelter.org/openapi.json>, the reader relay at `https://reader.agent-shelter.org/v1/reader` and the diagnostic preflight at `https://echo.agent-shelter.org/headers`. Its key for signed receipts is the one in its live manifest. |
-| [`schemas/telemetry-feed.schema.json`](schemas/telemetry-feed.schema.json) | JSON Schema (draft 2020-12) of the telemetry feed format `asp-telemetry-feed/1.2`, produced in the analysis zone: one event per record with its resolution stage, the three phase latencies, a threshold-free deliberation tier, the burst metrics, the client's own declarations and — for every event completed with a receipt — the receipt's signed fields with its Ed25519 signature and key identifier, verifiable offline. |
+| [`schemas/telemetry-feed.schema.json`](schemas/telemetry-feed.schema.json) | JSON Schema (draft 2020-12) of the telemetry feed format `asp-telemetry-feed/1.3`, produced in the analysis zone: one event per record with its resolution stage, the three phase latencies, a threshold-free deliberation tier, the burst metrics, the client's own declarations, — for every event completed with a receipt — the receipt's signed fields with its Ed25519 signature and key identifier, verifiable offline, and optionally the operator's attribution of the event (§5.1). |
 | [`schemas/sample-telemetry-feed.json`](schemas/sample-telemetry-feed.json) | A synthetic feed excerpt with four events: a reasoning agent through all three phases, an agent that stops after the signal, the anchor of a folded agent burst with its σ-spectrum, and an automated poller. No event was observed; every hash is derived from a declared synthetic label, and the receipts are signed with an example key whose private seed is derived from a declared label as well — a key no node uses. |
+
+### 5.1 Optional attribution of feed events (ASP-AURA)
+
+Since feed format `asp-telemetry-feed/1.3`, the operator's analysis zone can annotate each event with an attribution, the optional member `aura`. ASP-AURA — Autonomous Runtime Attribution & Adaptive Inference Engine — is a proprietary laboratory capability and not part of the protocol: it works only on records that were already stored and pulled, never runs on the node, collects nothing in addition and changes no response.
+
+- **Episodes.** Records of the same pseudonymised network, or of the same rare header skeleton, that follow each other closely in time form one episode — for example a fetcher that sends parallel requests from two cloud networks. Each event names its episode, the episode's size and time span, the smallest gap between two of its requests, the routes it visited and whether the client changed between signal and redemption.
+- **Five feature scores in [0, 1].** *Camouflage dissonance* (a browser-like User-Agent whose header structure is not a browser's, such as cloud tracing headers), *kinematic deliberation* (whether the phase latencies of §2 fit a model's inference or machine speed), *protocol agency* (how deep the client went: receipt, context report, the ticket header, a change of tool between stages), *linguistic velocity* (text length against think time, entropy, whether the text names the target; the same text from several clients counts as a template) and *swarm parallelism* (bursts, probing of several routes, repeated fetches, coalesced repeats).
+- **Four classes with their evidence.** Normalised scores for an autonomous tool or reasoning agent, a cloud AI web fetcher or retrieval pipeline, an automated script or classic poller, and a human with an interactive browser; the winning class with its share; and an ordered evidence ledger in which every finding names its dimension, the class it supports and the observed values behind it — never text written by a client.
+- **Memory.** Reference ranges come from laboratory runs with ground truth; a header skeleton or network that once completed a ticket raises the agent score of its observed signals, earlier ones included; recurring combinations of skeleton and behaviour keep stable signature identifiers, and the first event of each is marked as a novel pattern.
+
+**What the scores are not.** They are heuristic and uncalibrated: they sum to 1 but are not likelihoods, the live sample is small, and the laboratory's ground truth covers locally served open-weight models and scripted clients only. A client that waits before its signal looks deliberate to the latency dimension alone. The attribution is an analysis aid for the operator — not an identification of a client, and never a decision about one. Its weights and bounds are implementation-defined, like the sensor's (§1).
 
 ---
 
 ## 6. What is not published, and why
 
 - **Source code.** The sensor engine, its heuristics and the laboratory testbed are proprietary. The specification is complete without them; independent implementations are welcome at every compliance level.
-- **Tuning values.** The latency classification bounds, the coalescing threshold and window, and the sizes of the in-memory structures are implementation-defined (EDD §9). Section 1 explains why, and why the protocol's guarantees do not depend on them.
+- **Tuning values.** The latency classification bounds, the coalescing threshold and window, the sizes of the in-memory structures and the weights and bounds of the attribution analysis (§5.1) are implementation-defined (EDD §9). Section 1 explains why, and why the protocol's guarantees do not depend on them.
 - **Raw records.** Published laboratory reports contain only runs with laboratory ground truth, without receipt identifiers, subnet hashes, fingerprints, host names or file paths.
 
 ## 7. Verifying the claims from outside

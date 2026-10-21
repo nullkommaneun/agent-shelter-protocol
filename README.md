@@ -7,11 +7,11 @@ SPDX-FileCopyrightText: 2026 Thomas Ehrler
 
 **A declarative loop-termination standard for autonomous HTTP agents** — a truthful terminal-state signal, an Ed25519-signed Task-Completion Receipt that orchestrators verify offline and an optional, privacy-preserving telemetry node.
 
-[![ASP: 0.5.6](https://img.shields.io/badge/ASP-0.5.6-blue)](EDD-ASP-2026-001.md) [![specification: CC BY 4.0](https://img.shields.io/badge/specification-CC_BY_4.0-lightgrey)](LICENSE.md) [![reference sensor: proprietary](https://img.shields.io/badge/reference_sensor-proprietary-informational)](SENSOR_ARCHITECTURE.md) [![RFC 9457: problem details](https://img.shields.io/badge/RFC_9457-problem_details-brightgreen)](https://www.rfc-editor.org/rfc/rfc9457) [![ard.json v0.91: provisional mapping](https://img.shields.io/badge/ard.json_v0.91-provisional_mapping-orange)](schemas/ard.json) [![OpenAPI: 3.1](https://img.shields.io/badge/OpenAPI-3.1-brightgreen)](schemas/openapi.json) [![reference node: agent-shelter.org](https://img.shields.io/badge/reference_node-agent--shelter.org-success)](https://agent-shelter.org)
+[![ASP: 0.6.0](https://img.shields.io/badge/ASP-0.6.0-blue)](EDD-ASP-2026-001.md) [![specification: CC BY 4.0](https://img.shields.io/badge/specification-CC_BY_4.0-lightgrey)](LICENSE.md) [![reference sensor: proprietary](https://img.shields.io/badge/reference_sensor-proprietary-informational)](SENSOR_ARCHITECTURE.md) [![RFC 9457: problem details](https://img.shields.io/badge/RFC_9457-problem_details-brightgreen)](https://www.rfc-editor.org/rfc/rfc9457) [![ard.json v0.91: provisional mapping](https://img.shields.io/badge/ard.json_v0.91-provisional_mapping-orange)](schemas/ard.json) [![OpenAPI: 3.1](https://img.shields.io/badge/OpenAPI-3.1-brightgreen)](schemas/openapi.json) [![reference node: agent-shelter.org](https://img.shields.io/badge/reference_node-agent--shelter.org-success)](https://agent-shelter.org)
 
 | | |
 |---|---|
-| **Specification** | [EDD-ASP-2026-001](EDD-ASP-2026-001.md), version 0.5.6 |
+| **Specification** | [EDD-ASP-2026-001](EDD-ASP-2026-001.md), version 0.6.0 |
 | **Status** | Independent draft for public comment — not an IETF RFC and not a W3C Recommendation |
 | **Editor** | Thomas Ehrler |
 | **Discovery** | `/.well-known/agent-shelter.json`, in the tradition of `robots.txt` (RFC 9309) and `security.txt` (RFC 9116) |
@@ -137,6 +137,8 @@ It answers every client with the same receipt (zero side-channel contract), fold
 - [`schemas/telemetry-feed.schema.json`](schemas/telemetry-feed.schema.json) — JSON Schema of the telemetry feed
 - [`schemas/sample-telemetry-feed.json`](schemas/sample-telemetry-feed.json) — synthetic feed excerpt: a reasoning agent through all three phases, an agent that stops at the signal, a folded agent burst with its σ-spectrum, an automated poller
 
+Since feed format 1.3 the operator's analysis zone can annotate each event with an attribution (ASP-AURA, datasheet §5.1): the episode it belongs to, five feature scores, normalised scores of four client classes and the observed evidence behind them. It is heuristic and uncalibrated, runs only on stored records and is not part of the protocol.
+
 ## 5. Empirical evaluation summary
 
 Closed laboratory series: locally served open-weight language models act as autonomous HTTP clients against a reference sensor (EDD §8).
@@ -164,22 +166,22 @@ Loop termination (LTER): 6 of 6 signalled runs stopped pursuing the resource. Gu
     │   └── sample-telemetry-feed.json      synthetic telemetry feed excerpt
     ├── CITATION.cff                        citation metadata
     ├── .zenodo.json                        archive metadata
-    ├── ASP-v0.5-spec.sha256                checksums of the specification files
-    ├── ASP-v0.5-spec.sha256.asc            the editor's OpenPGP signature of that checksum file
+    ├── ASP-v0.6-spec.sha256                checksums of the specification files
+    ├── ASP-v0.6-spec.sha256.asc            the editor's OpenPGP signature of that checksum file
     ├── SHA256SUMS                          checksums of every file of this release
     └── LICENSE.md                          CC BY 4.0
 
 Verify the release:
 
-    gpg --verify ASP-v0.5-spec.sha256.asc ASP-v0.5-spec.sha256   # with the editor's OpenPGP public key
-    sha256sum -c ASP-v0.5-spec.sha256   # the specification files
+    gpg --verify ASP-v0.6-spec.sha256.asc ASP-v0.6-spec.sha256   # with the editor's OpenPGP public key
+    sha256sum -c ASP-v0.6-spec.sha256   # the specification files
     sha256sum -c SHA256SUMS   # every file of this release
 
 The signature covers the checksum file, and the checksum file covers every specification file. Obtain the editor's public key through a channel you trust before relying on it.
 
 ## Cite
 
-Ehrler, T. (2026). *The Agent-Shelter Protocol (ASP): Graceful Loop Termination and Diagnostic Sanctuary for Autonomous Web Agents.* Engineering Design Document EDD-ASP-2026-001, version 0.5.6. See [`CITATION.cff`](CITATION.cff).
+Ehrler, T. (2026). *The Agent-Shelter Protocol (ASP): Graceful Loop Termination and Diagnostic Sanctuary for Autonomous Web Agents.* Engineering Design Document EDD-ASP-2026-001, version 0.6.0. See [`CITATION.cff`](CITATION.cff).
 
 ## License
 
