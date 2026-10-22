@@ -7,15 +7,15 @@ SPDX-FileCopyrightText: 2026 Thomas Ehrler
 
 **A declarative loop-termination standard for autonomous HTTP agents** — a truthful terminal-state signal, an Ed25519-signed Task-Completion Receipt that orchestrators verify offline and an optional, privacy-preserving telemetry node.
 
-[![ASP: 0.6.1](https://img.shields.io/badge/ASP-0.6.1-blue)](EDD-ASP-2026-001.md) [![specification: CC BY 4.0](https://img.shields.io/badge/specification-CC_BY_4.0-lightgrey)](LICENSE.md) [![reference sensor: proprietary](https://img.shields.io/badge/reference_sensor-proprietary-informational)](SENSOR_ARCHITECTURE.md) [![RFC 9457: problem details](https://img.shields.io/badge/RFC_9457-problem_details-brightgreen)](https://www.rfc-editor.org/rfc/rfc9457) [![ard.json v0.91: provisional mapping](https://img.shields.io/badge/ard.json_v0.91-provisional_mapping-orange)](schemas/ard.json) [![OpenAPI: 3.1](https://img.shields.io/badge/OpenAPI-3.1-brightgreen)](schemas/openapi.json) [![reference node: agent-shelter.org](https://img.shields.io/badge/reference_node-agent--shelter.org-success)](https://agent-shelter.org)
+[![ASP: 0.6.2](https://img.shields.io/badge/ASP-0.6.2-blue)](EDD-ASP-2026-001.md) [![specification: CC BY 4.0](https://img.shields.io/badge/specification-CC_BY_4.0-lightgrey)](LICENSE.md) [![reference sensor: proprietary](https://img.shields.io/badge/reference_sensor-proprietary-informational)](SENSOR_ARCHITECTURE.md) [![RFC 9457: problem details](https://img.shields.io/badge/RFC_9457-problem_details-brightgreen)](https://www.rfc-editor.org/rfc/rfc9457) [![ard.json v0.91: provisional mapping](https://img.shields.io/badge/ard.json_v0.91-provisional_mapping-orange)](schemas/ard.json) [![OpenAPI: 3.1](https://img.shields.io/badge/OpenAPI-3.1-brightgreen)](schemas/openapi.json) [![reference node: agent-shelter.org](https://img.shields.io/badge/reference_node-agent--shelter.org-success)](https://agent-shelter.org)
 
 | | |
 |---|---|
-| **Specification** | [EDD-ASP-2026-001](EDD-ASP-2026-001.md), version 0.6.1 |
+| **Specification** | [EDD-ASP-2026-001](EDD-ASP-2026-001.md), version 0.6.2 |
 | **Status** | Independent draft for public comment — not an IETF RFC and not a W3C Recommendation |
 | **Editor** | Thomas Ehrler |
 | **Discovery** | `/.well-known/agent-shelter.json`, in the tradition of `robots.txt` (RFC 9309) and `security.txt` (RFC 9116) |
-| **Wire format** | HTTP `429` with RFC 9457 problem details (`application/problem+json`); optionally the identical object with HTTP `200` (`envelope=200`); the 48-character ticket also in the header `Agent-Ticket`; the receipt and the context report by `POST` or `GET` |
+| **Wire format** | HTTP `429` with RFC 9457 problem details (`application/problem+json`); optionally the identical object with HTTP `200` (`envelope=200`); the 48-character ticket also in the header `Agent-Ticket`; the receipt and the context report by `POST` or `GET`; `verification_status` `PENDING_RESOLUTION` in the signal, `VERIFIED_TERMINAL` in the receipt |
 | **Reference node** | [agent-shelter.org](https://agent-shelter.org) — the official reference observatory (Level 3), live |
 | **License** | specification, schemas and reports: CC BY 4.0 · reference sensor: proprietary |
 
@@ -34,10 +34,11 @@ ASP works like a runaway-truck arrester bed beside a steep descent. Instead of a
 | an ordinary website or blog — most sites | **Level 1 – Static** (`L1-static`) | Publish `/.well-known/agent-shelter.json` and paste one snippet from [`ADOPTION_GUIDE.md`](ADOPTION_GUIDE.md): about 15 lines for Nginx or Caddy, or a short Cloudflare Worker. No application code; it takes about a minute. |
 | an API or a SaaS platform | **Level 2 – Transactional** (`L2-transactional`) | Also issue signed `RESOLVED_TERMINAL` receipts, so that a multi-step sub-agent workflow gets a proof its orchestrator can verify offline — and can close the branch instead of escalating. |
 | a security or threat-intelligence team | **Level 3 – Observatory** (`L3-observatory`) | Full three-phase latency measurement, silent burst coalescing and asynchronous context reports — as on the official reference observatory, [agent-shelter.org](https://agent-shelter.org). |
+| a website that refuses AI agents somewhere and runs no node | **the relay** | Redirect the requests you refuse to the public relay of the reference observatory, `https://sanctuary.agent-shelter.org/v1/relay?url=…`: a terminal state and a signed receipt for the client, without code of your own ([`ADOPTION_GUIDE.md`](ADOPTION_GUIDE.md)). |
 
 ## Try it live: the official reference observatory
 
-The reference sensor runs publicly at **[agent-shelter.org](https://agent-shelter.org)**, a Level 3 observatory (protocol v0.5.x):
+The reference sensor runs publicly at **[agent-shelter.org](https://agent-shelter.org)**, a Level 3 observatory (protocol v0.6.x):
 
 | What | Where |
 |---|---|
@@ -47,6 +48,7 @@ The reference sensor runs publicly at **[agent-shelter.org](https://agent-shelte
 | Diagnostic preflight: a local answer on first contact, the `429` signal on a repeat | <https://echo.agent-shelter.org/headers> · <https://echo.agent-shelter.org/base64/dGVzdA==> |
 | Reader relay: the terminal `429` signal with a single-use ticket at once | <https://reader.agent-shelter.org/v1/reader?url=https://example.org/resource> |
 | The same signal in a transport envelope — HTTP `200`, `"transport_envelope": 200` — for web-fetch tools that discard 4xx bodies | <https://reader.agent-shelter.org/v1/reader?url=https://example.org/resource&envelope=200> |
+| Relay for other sites: a site that refuses a client redirects it here, naming the URL it asked for; the same signal for that URL | <https://sanctuary.agent-shelter.org/v1/relay?url=https://example.org/resource&reason=example> |
 | The same node under its function subdomains | <https://relay.agent-shelter.org/llms.txt> · <https://sanctuary.agent-shelter.org/.well-known/agent-shelter.json> |
 | Privacy notice and security contact | <https://agent-shelter.org/privacy> · <https://agent-shelter.org/.well-known/security.txt> |
 
@@ -63,7 +65,7 @@ Why the envelope: in a field test on 19 October 2026 the built-in web-fetch tool
 
 Channel-capacity invariance (whitepaper §6.1.5): the ticket is 48 characters long and arrives in the response header `Agent-Ticket` as well as in the members `ticket`, `resolution_url` and `resolution_uri`, so a client that keeps only header fields, only a truncated body or only absolute links still holds it. `POST /api/v1/agent-shelter/resolve` accepts it as the query parameter `ticket`, the request header `Agent-Ticket` or the body member `ticket`; a client that can only issue `GET` requests opens `resolution_uri` itself — the same single-use transition and the same signed receipt, with optional telemetry as query parameters (whitepaper §6.3.2, §7.6). It leaves its optional context report the same way: `GET` on the receipt's `sanctuary_bulletin.dropbox_url` with `workflow_summary` and `agent_questions_or_notes` as query parameters; the bare URL without either archives nothing, so a link preloader cannot use up the drop box (whitepaper §6.6.2).
 
-The reference node is also a research telemetry sink, and says so (whitepaper §1.6). A signal that follows a discovery request from your network within ten minutes — reading a discovery document such as the manifest, or a first local answer on the echo routes — is recorded at once, pseudonymised: a salted hash of your network prefix, your User-Agent and the order of your header names, the requested URL and the host name you addressed. So the requests above, run in this order, leave one record per reader request; redeeming a ticket completes its record. A reader request on its own, without such a discovery request, writes nothing. No plaintext IP address is stored. Requests for the node and discovery documents are counted in aggregate — per document and client class, a number and the time of the latest request, without address, network hash or User-Agent text (whitepaper §5.4.3). Details: <https://agent-shelter.org/privacy>.
+The reference node is also a research telemetry sink, and says so (whitepaper §1.6). A signal that follows a discovery request from your network within ten minutes — reading a discovery document such as the manifest, or a first local answer on the echo routes — is recorded at once, pseudonymised: a salted hash of your network prefix, your User-Agent and the order of your header names, the requested URL and the host name you addressed. So the requests above, run in this order, leave one record per reader request; redeeming a ticket completes its record. A signal without such a discovery request is recorded only when it is the first from your network within ten minutes; further ones are only counted on that record (whitepaper §5.4.4). No plaintext IP address is stored. Requests for the node and discovery documents are counted in aggregate — per document and client class, a number and the time of the latest request, without address, network hash or User-Agent text (whitepaper §5.4.3). Details: <https://agent-shelter.org/privacy>.
 
 ## Status of this document
 
@@ -91,7 +93,7 @@ The receipt (`200`, `RESOLVED_TERMINAL`) is a machine-readable **proof of termin
 
 Every receipt is signed with Ed25519 (RFC 8032) over its key fields — status, protocol version, receipt id, route, requested resource, redemption time and outcome. The manifest publishes the public key, its RFC 7638 key identifier and the signed fields (`receipt_verification`), so an orchestrator verifies a receipt offline, without asking the host again (whitepaper §6.3.5).
 
-Discovery documents describe a host, not a target: they say that nothing can be retrieved through it, but a target-specific terminal signal and a signed receipt exist only for a request that names the target (`GET /v1/reader?url=<target_url>`). The signal in turn carries a single-use ticket, not a proof: the signed receipt — `receipt_id`, `receipt_signature`, `sanctuary_bulletin.dropbox_url` — exists only in the `200` response of the resolution, by `POST` or `GET` (whitepaper §6.3.1, §6.5).
+Discovery documents describe a host, not a target: they say that nothing can be retrieved through it, but a target-specific terminal signal and a signed receipt exist only for a request that names the target (`GET /v1/reader?url=<target_url>`). The signal in turn carries a single-use ticket, not a proof (`verification_status` `PENDING_RESOLUTION`): the signed receipt — `verification_status` `VERIFIED_TERMINAL`, `receipt_id`, `receipt_signature`, `sanctuary_bulletin.dropbox_url` — exists only in the `200` response of the resolution, by `POST` or `GET` (whitepaper §6.3.1, §6.5).
 
 ASP is adopted in three cumulative compliance levels, declared in the manifest member `compliance_level`:
 
@@ -102,6 +104,7 @@ ASP is adopted in three cumulative compliance levels, declared in the manifest m
 | **L3 — Full Telemetry & Context Node** | `L3-observatory` | timing telemetry (up to three phases), silent burst coalescing, the optional context-report drop box | a full sensor |
 
     GET  /v1/reader?url=<target>                        -> 429 problem+json, terminal state, single-use ticket
+    GET  /v1/relay?url=<origin_url>&reason=<code>       -> 429 the same, for a URL that another site names
     POST /api/v1/agent-shelter/resolve?ticket=<ticket>  -> 200 Task-Completion Receipt (RESOLVED_TERMINAL, Ed25519-signed)
     GET  /api/v1/agent-shelter/resolve?ticket=<ticket>  -> 200 the same receipt, for clients that can only read
     POST /api/v1/agent-shelter/sanctuary/<receipt_id>   -> 200 once (optional context report), 409 terminal after that
@@ -120,9 +123,11 @@ Close a route that automated clients keep hammering with one configuration block
 
 Copyable configurations for **Nginx**, **Caddy** and **Cloudflare Workers**: [`ADOPTION_GUIDE.md`](ADOPTION_GUIDE.md). Levels 2 and 3 are specified in the whitepaper (§5.3–§6.7).
 
+**No node of your own?** Redirect the requests you refuse to automated clients to the public relay of the reference observatory, `https://sanctuary.agent-shelter.org/v1/relay?url=<URL>&reason=<code>` — one line for Nginx or Caddy, a short Worker ([`ADOPTION_GUIDE.md`](ADOPTION_GUIDE.md)). The relay never fetches the URL and verifies nothing about your site; it gives the client a terminal state and a signed receipt, and it records the request like any signal (whitepaper §6.1.6).
+
 ## 4. The ASP Reference Sensor (L3-Observatory) and its telemetry feed
 
-The reference sensor is a full L3 node. Without a database write for single, uncorrelated requests it measures three phases of a client's encounter:
+The reference sensor is a full L3 node. It measures three phases of a client's encounter without a database write per request:
 
 | Phase | Interval | Field |
 |---|---|---|
@@ -135,7 +140,7 @@ It answers every client with the same receipt (zero side-channel contract), fold
 - [`SENSOR_ARCHITECTURE.md`](SENSOR_ARCHITECTURE.md) — architecture & capability datasheet
 - [`schemas/openapi.json`](schemas/openapi.json) — OpenAPI 3.1 description of every public endpoint
 - [`schemas/telemetry-feed.schema.json`](schemas/telemetry-feed.schema.json) — JSON Schema of the telemetry feed
-- [`schemas/sample-telemetry-feed.json`](schemas/sample-telemetry-feed.json) — synthetic feed excerpt: a reasoning agent through all three phases, an agent that stops at the signal, a folded agent burst with its σ-spectrum, an automated poller
+- [`schemas/sample-telemetry-feed.json`](schemas/sample-telemetry-feed.json) — synthetic feed excerpt: a reasoning agent through all three phases, a relayed direct signal with its counted repeats, an agent that stops at the signal, a folded agent burst with its σ-spectrum, an automated poller
 
 Since feed format 1.3 the operator's analysis zone can annotate each event with an attribution (ASP-AURA, datasheet §5.1): the episode it belongs to, five feature scores, normalised scores of four client classes and the observed evidence behind them. It is heuristic and uncalibrated, runs only on stored records and is not part of the protocol.
 
@@ -154,7 +159,7 @@ Loop termination (LTER): 6 of 6 signalled runs stopped pursuing the resource. Gu
     .
     ├── README.md                           this page
     ├── EDD-ASP-2026-001.md                 the specification (normative): Engineering Design Document and RFC-style draft
-    ├── ADOPTION_GUIDE.md                   Level 1 in 60 seconds: Nginx, Caddy, Cloudflare Workers
+    ├── ADOPTION_GUIDE.md                   Level 1 in 60 seconds and the relay: Nginx, Caddy, Cloudflare Workers
     ├── SENSOR_ARCHITECTURE.md              architecture & capability datasheet of the reference sensor
     ├── REPORT.md                           laboratory evaluation report
     ├── BENCHMARK_SUMMARY.json              the same results, machine-readable
@@ -181,7 +186,7 @@ The signature covers the checksum file, and the checksum file covers every speci
 
 ## Cite
 
-Ehrler, T. (2026). *The Agent-Shelter Protocol (ASP): Graceful Loop Termination and Diagnostic Sanctuary for Autonomous Web Agents.* Engineering Design Document EDD-ASP-2026-001, version 0.6.1. See [`CITATION.cff`](CITATION.cff).
+Ehrler, T. (2026). *The Agent-Shelter Protocol (ASP): Graceful Loop Termination and Diagnostic Sanctuary for Autonomous Web Agents.* Engineering Design Document EDD-ASP-2026-001, version 0.6.2. See [`CITATION.cff`](CITATION.cff).
 
 ## License
 

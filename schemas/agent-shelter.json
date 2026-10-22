@@ -1,5 +1,5 @@
 {
-  "asp_version": "0.6.1",
+  "asp_version": "0.6.2",
   "protocol": "Agent-Shelter Protocol",
   "specification": "EDD-ASP-2026-001",
   "compliance_level": "L3-observatory",
@@ -14,6 +14,22 @@
         "url"
       ],
       "requested_resource_context": "requested URL, truncated to 256 characters",
+      "behaviour": "immediate-terminal-signal",
+      "first_contact_status": 429
+    },
+    {
+      "method": "GET",
+      "path": "/v1/relay",
+      "parameters": [
+        "url",
+        "reason"
+      ],
+      "requested_resource_context": "URL of another origin named by url, truncated to 256 characters; neither retrieved nor verified",
+      "relay_reason": {
+        "pattern": "^[a-z0-9][a-z0-9._-]{0,31}$",
+        "statement": "an optional reason code of the site that sent the client here; kept with the signal, any other value is ignored"
+      },
+      "statement": "Relay route: requested_resource_context is the URL named in the url parameter, typically by a site that sent the client here. This node does not retrieve that URL and verifies nothing about its origin; the signal and the receipt state only what happened on this node.",
       "behaviour": "immediate-terminal-signal",
       "first_contact_status": 429
     },
@@ -43,6 +59,7 @@
   "signal": {
     "status": 429,
     "retry_after": false,
+    "verification_status": "PENDING_RESOLUTION",
     "media_type": "application/problem+json",
     "problem_type": "/asp/problems/unproductive-retry",
     "headers": {
@@ -118,6 +135,8 @@
     "max_note_chars": 2000,
     "max_request_body_bytes": 8192,
     "receipt_status": "RESOLVED_TERMINAL",
+    "receipt_verification_status": "VERIFIED_TERMINAL",
+    "verification_statement": "The signal (HTTP 429, or HTTP 200 with envelope=200) has verification_status PENDING_RESOLUTION: it carries a single-use state token, the ticket, and no proof. The signed proof object - verification_status VERIFIED_TERMINAL, status RESOLVED_TERMINAL, receipt_id, the Ed25519 receipt_signature and sanctuary_bulletin.dropbox_url - materialises only in the HTTP 200 response of the state transition at resolution_uri (relative: resolution_url), by POST or GET.",
     "receipt_semantics": "Documents a terminal state for the requested resource on this host. It does not state that the original objective was achieved."
   },
   "receipt_verification": {
@@ -177,7 +196,16 @@
       "L2_RECEIPT_REDEEMED",
       "L3_CONTEXT_REPORTED"
     ],
-    "statement": "A terminal signal that follows a discovery request from the same network prefix within the window (a request to one of the discovery routes; for /headers and /base64/{encoded_val} a first contact answered locally) is recorded when it is issued, with resolution stage L1_SIGNAL_OBSERVED. Redeeming its ticket completes that record (L2_RECEIPT_REDEEMED); a context report raises it to L3_CONTEXT_REPORTED. A signal without such a discovery request is not recorded. The signal and every response are the same either way."
+    "statement": "A terminal signal that follows a discovery request from the same network prefix within the window (a request to one of the discovery routes; for /headers and /base64/{encoded_val} a first contact answered locally) is recorded when it is issued, with resolution stage L1_SIGNAL_OBSERVED. Redeeming its ticket completes that record (L2_RECEIPT_REDEEMED); a context report raises it to L3_CONTEXT_REPORTED. A signal without such a discovery request is recorded under the bounded rule of the manifest member direct_signal_records. The signal and every response are the same either way."
+  },
+  "direct_signal_records": {
+    "enabled": true,
+    "window_seconds": 600,
+    "records_per_network_and_window": 1,
+    "repeat_counter": "signal_repeat_count",
+    "flush_interval_seconds": 60,
+    "resolution_stage": "L1_SIGNAL_OBSERVED",
+    "statement": "A terminal signal that follows no discovery request - a client that calls a signal route straight away - is recorded as well, with resolution stage L1_SIGNAL_OBSERVED and without discovery route and planning latency, within bounds: the first such signal per network prefix and window is recorded; the further ones of that network in the window are not stored one by one but counted on that record (signal_repeat_count), added at most once per flush interval; new records of this kind draw on a write budget per time, and the unredeemed ones hold a bounded share of the ring buffer, in which a new one takes the place of the oldest. Redeeming a recorded signal's ticket completes its record; the tickets of the counted signals are redeemable as long as this node holds their state. The signal and every response are the same either way."
   },
   "discovery_counters": {
     "enabled": true,
@@ -211,6 +239,7 @@
     "http_fingerprint": "User-Agent and order of request header names, kept for the signal request and for the redemption request",
     "ingress_host": "host name the request was addressed to (Host header without port; never an IP literal)",
     "ticket_state": "issue time, subnet hash, ingress route, requested resource context, host name and HTTP fingerprint of the signal request of each issued compact ticket, in memory only, until redemption or at most one minute after the ticket lifetime; never written for a signal that is not recorded",
+    "relay_reason": "on the relay route only: the optional reason code of the site that sent the client, a short lower-case token",
     "discovery_counters": "per counted document and client class: the number of requests and the time of the most recent one; no address, subnet hash, User-Agent text or single request",
     "scrubbing": [
       "ANSI escape sequences",

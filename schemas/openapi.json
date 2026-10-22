@@ -3,12 +3,12 @@
   "info": {
     "title": "Open Diagnostic Echo & Markdown Reader Relay (ASP compliant)",
     "summary": "Agent-Shelter Protocol (ASP) node: terminal-state signal, Task-Completion Receipt, context report",
-    "description": "Diagnostic echo and reader interfaces operated as an Agent-Shelter Protocol (ASP) sensor. Upstream retrieval is disabled on this host: no endpoint fetches external URLs. The discovery documents state this for every target but are no record about a particular one: a resource-specific terminal-state signal and its single-use ticket exist only for a request that names the target (`GET /v1/reader?url=<target_url>`). The reader route answers with an ASP terminal-state signal (HTTP 429, RFC 9457 problem details) and a single-use ticket; the header-echo and base64 routes answer a first contact locally (HTTP 200) and switch to that signal on a repeat; with envelope=200 every ingress route sends the same signal with HTTP status 200 as application/json and the member transport_envelope: 200, for web-fetch tools that discard the body of a 4xx response; the ticket (48 characters) is in the header Agent-Ticket and the members ticket, resolution_url and resolution_uri; `POST /api/v1/agent-shelter/resolve` maps it - from the query parameter ticket, the request header Agent-Ticket or the body member ticket - to a terminal-state receipt for the ticket's target, signed with Ed25519 so that an orchestrator can verify it offline against the manifest member receipt_verification, and `GET /api/v1/agent-shelter/resolve` performs the same transition for clients that issue GET requests only; the receipt's body offers one optional, single-use asynchronous context drop box at `/api/v1/agent-shelter/sanctuary/{receipt_id}`, which takes the report by POST (JSON body) or by GET (query parameters workflow_summary and agent_questions_or_notes). Every error is an RFC 9457 problem details object. Manifest: /.well-known/agent-shelter.json. A signal that follows a discovery request from the same network is recorded when it is issued (manifest member discovery_correlation).",
+    "description": "Diagnostic echo and reader interfaces operated as an Agent-Shelter Protocol (ASP) sensor. Upstream retrieval is disabled on this host: no endpoint fetches external URLs. The discovery documents state this for every target but are no record about a particular one: a resource-specific terminal-state signal and its single-use ticket exist only for a request that names the target (`GET /v1/reader?url=<target_url>`). The reader route answers with an ASP terminal-state signal (HTTP 429, RFC 9457 problem details, verification_status PENDING_RESOLUTION) and a single-use ticket; the relay route `GET /v1/relay?url=<origin_url>` gives the same signal for a URL of another origin whose site sent the client here, without retrieving or verifying it; the header-echo and base64 routes answer a first contact locally (HTTP 200) and switch to that signal on a repeat; with envelope=200 every ingress route sends the same signal with HTTP status 200 as application/json and the member transport_envelope: 200, for web-fetch tools that discard the body of a 4xx response; the ticket (48 characters) is in the header Agent-Ticket and the members ticket, resolution_url and resolution_uri; `POST /api/v1/agent-shelter/resolve` maps it - from the query parameter ticket, the request header Agent-Ticket or the body member ticket - to a terminal-state receipt (verification_status VERIFIED_TERMINAL) for the ticket's target, signed with Ed25519 so that an orchestrator can verify it offline against the manifest member receipt_verification, and `GET /api/v1/agent-shelter/resolve` performs the same transition for clients that issue GET requests only; the receipt's body offers one optional, single-use asynchronous context drop box at `/api/v1/agent-shelter/sanctuary/{receipt_id}`, which takes the report by POST (JSON body) or by GET (query parameters workflow_summary and agent_questions_or_notes). Every error is an RFC 9457 problem details object. Manifest: /.well-known/agent-shelter.json. A signal that follows a discovery request from the same network is recorded when it is issued (manifest member discovery_correlation). A signal without such a request is recorded as well, the first per network and window within a bounded budget; the further ones are counted on that record (manifest member direct_signal_records).",
     "license": {
       "name": "CC BY 4.0 (this interface description)",
       "identifier": "CC-BY-4.0"
     },
-    "version": "0.6.1"
+    "version": "0.6.2"
   },
   "paths": {
     "/robots.txt": {
@@ -282,6 +282,165 @@
               "title": "Url"
             },
             "description": "Target URL; recorded in bounded form, never fetched."
+          },
+          {
+            "name": "envelope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional transport envelope (EDD-ASP-2026-001 §6.1.4): with envelope=200 the terminal-state signal is the identical object with HTTP status 200, as application/json with the member transport_envelope: 200; its status member stays 429. Any other value is ignored.",
+              "title": "Envelope"
+            },
+            "description": "Optional transport envelope (EDD-ASP-2026-001 §6.1.4): with envelope=200 the terminal-state signal is the identical object with HTTP status 200, as application/json with the member transport_envelope: 200; its status member stays 429. Any other value is ignored."
+          }
+        ],
+        "responses": {
+          "429": {
+            "description": "The ASP terminal-state signal (EDD-ASP-2026-001 §6.1.2): problem details with a single-use resolution ticket. It never carries Retry-After: the state is terminal.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerminalSignal"
+                }
+              }
+            },
+            "headers": {
+              "Agent-Loop-State": {
+                "description": "The detected loop state; terminal=true states that retrying cannot change the outcome on this host.",
+                "schema": {
+                  "type": "string",
+                  "const": "unproductive-retry-detected; terminal=true"
+                }
+              },
+              "Agent-Resolution": {
+                "description": "The same-origin resolution URL with the single-use ticket, and its method.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Agent-Ticket": {
+                "description": "The single-use ticket of this signal (48 characters), the same as the member ticket (EDD-ASP-2026-001 §6.1.5).",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^c1\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]{22}$"
+                }
+              },
+              "Link": {
+                "description": "The ASP manifest (rel=describedby).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "Never cached.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "The terminal-state signal in a transport envelope (envelope=200, EDD-ASP-2026-001 §6.1.4): the same object, ticket and header fields, HTTP status 200.",
+            "headers": {
+              "Agent-Loop-State": {
+                "description": "The detected loop state; terminal=true states that retrying cannot change the outcome on this host.",
+                "schema": {
+                  "type": "string",
+                  "const": "unproductive-retry-detected; terminal=true"
+                }
+              },
+              "Agent-Resolution": {
+                "description": "The same-origin resolution URL with the single-use ticket, and its method.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Agent-Ticket": {
+                "description": "The single-use ticket of this signal (48 characters), the same as the member ticket (EDD-ASP-2026-001 §6.1.5).",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^c1\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]{22}$"
+                }
+              },
+              "Link": {
+                "description": "The ASP manifest (rel=describedby).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "Never cached.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "X-Robots-Tag": {
+                "description": "The envelope is no content to index.",
+                "schema": {
+                  "type": "string",
+                  "const": "noindex"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnvelopedTerminalSignal"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/relay": {
+      "get": {
+        "tags": [
+          "ingress"
+        ],
+        "summary": "Relay interface for sites that send a blocked client here",
+        "description": "Upstream retrieval is disabled on this host: no endpoint fetches external URLs. A site that blocks a client can send it here - with HTTP 303 or a link - naming the URL it asked for in url; every request is answered with the terminal-state signal for that URL, whose single-use ticket yields a signed receipt for it, exactly as on the reader route (EDD-ASP-2026-001 §6.1.6). The node neither retrieves nor verifies anything about the other origin.",
+        "operationId": "getRelay",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "URL of the other origin; recorded in bounded form, never fetched.",
+              "default": "",
+              "title": "Url"
+            },
+            "description": "URL of the other origin; recorded in bounded form, never fetched."
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional reason code of the sending site: a short lower-case token (pattern ^[a-z0-9][a-z0-9._-]{0,31}$); any other value is ignored.",
+              "title": "Reason"
+            },
+            "description": "Optional reason code of the sending site: a short lower-case token (pattern ^[a-z0-9][a-z0-9._-]{0,31}$); any other value is ignored."
           },
           {
             "name": "envelope",
@@ -1642,6 +1801,7 @@
         "description": "Documents a terminal state for the requested resource on this host; it does not state that the original objective was achieved (EDD-ASP-2026-001 §6.3.4). Every accepted redemption receives the same structure. Signed with Ed25519 over the fields listed in the manifest member receipt_verification.signed_fields, so that it can be verified offline (§6.3.5).",
         "required": [
           "status",
+          "verification_status",
           "asp_version",
           "receipt_id",
           "ingress_route",
@@ -1660,6 +1820,10 @@
           "status": {
             "const": "RESOLVED_TERMINAL"
           },
+          "verification_status": {
+            "const": "VERIFIED_TERMINAL",
+            "description": "The proof of the state transition (EDD-ASP-2026-001 §6.3.4); the member is not among the signed fields."
+          },
           "asp_version": {
             "type": "string"
           },
@@ -1672,6 +1836,7 @@
             "type": "string",
             "enum": [
               "/v1/reader",
+              "/v1/relay",
               "/headers",
               "/base64/{encoded_val}"
             ]
@@ -1731,6 +1896,8 @@
           "loop_state",
           "terminal",
           "success_probability",
+          "verification_status",
+          "resolution_hint",
           "ingress_route",
           "requested_resource_context",
           "ticket",
@@ -1751,6 +1918,14 @@
           "asp_version": {
             "type": "string"
           },
+          "verification_status": {
+            "const": "PENDING_RESOLUTION",
+            "description": "This object carries the ticket, not the proof: the proof - verification_status VERIFIED_TERMINAL - is the receipt of the state transition at resolution_uri (EDD-ASP-2026-001 §6.1.2)."
+          },
+          "resolution_hint": {
+            "type": "string",
+            "description": "The two-phase split in one sentence, next to verification_status, for channels that truncate the longer detail (EDD-ASP-2026-001 §6.1.2)."
+          },
           "loop_state": {
             "const": "unproductive-retry-detected"
           },
@@ -1764,6 +1939,7 @@
             "type": "string",
             "enum": [
               "/v1/reader",
+              "/v1/relay",
               "/headers",
               "/base64/{encoded_val}"
             ]
@@ -1810,6 +1986,15 @@
           },
           "receipt_status": {
             "const": "RESOLVED_TERMINAL"
+          },
+          "relay_reason": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,31}$",
+            "description": "Relay route only (/v1/relay): the reason code the sending site named, when it matched the pattern (EDD-ASP-2026-001 §6.1.6)."
+          },
+          "relay_statement": {
+            "type": "string",
+            "description": "Relay route only (/v1/relay): what the signal states about the other origin - nothing beyond this request."
           }
         }
       }

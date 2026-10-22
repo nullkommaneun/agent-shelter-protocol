@@ -3,9 +3,9 @@ SPDX-License-Identifier: CC-BY-4.0
 SPDX-FileCopyrightText: 2026 Thomas Ehrler
 -->
 
-# ASP laboratory results — consolidated report (v0.6.1)
+# ASP laboratory results — consolidated report (v0.6.2)
 
-Companion to EDD-ASP-2026-001 v0.6.1 · generated 2026-10-21 · machine-readable twin: `BENCHMARK_SUMMARY.json`
+Companion to EDD-ASP-2026-001 v0.6.2 · generated 2026-10-22 · machine-readable twin: `BENCHMARK_SUMMARY.json`
 
 ## Scope and setup
 
